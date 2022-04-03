@@ -23,11 +23,11 @@ from src.modules.app import app_entities
 # from myapp import mymodel
 target_metadata = Base.metadata
 
-
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
 
 def get_url():
     db_user = config_env.DATABASE_USERNAME
@@ -70,12 +70,6 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    # connectable = engine_from_config(
-    #     config.get_section(config.config_ini_section),
-    #     prefix="sqlalchemy.",
-    #     poolclass=pool.NullPool,
-    # )
-
     configuration = config.get_section(config.config_ini_section)
     configuration['sqlalchemy.url'] = get_url()
     connectable = engine_from_config(
