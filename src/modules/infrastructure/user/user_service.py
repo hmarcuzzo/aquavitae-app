@@ -1,7 +1,9 @@
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
+from src.core.types.exceptions_type import BadRequestException, NotFoundException
+from .dto.create_user_dto import CreateUserDto
 from .dto.user_dto import UserDto
 from .entities.user_entity import User
 from .user_repository import UserRepository
@@ -11,9 +13,34 @@ class UserService:
     def __init__(self):
         self.user_repository = UserRepository()
 
-    async def verify_email_exist(self, email: str, db_session: Session) -> Optional[User]:
-        return self.user_repository.find_user_by_email(email, db_session)
+    # PUBLIC METHODS
+    async def create_user(self, user_dto: CreateUserDto, db_session: Session) -> UserDto:
+        user = await self.__verify_email_exist(user_dto.email, db_session)
 
-    async def new_user_register(self, user_dto: UserDto, db_session: Session) -> User:
+        if user:
+            raise BadRequestException('The user with this email already exists in the system.')
+
         new_user = User(name=user_dto.name, email=user_dto.email, password=user_dto.password)
-        return self.user_repository.create_user(new_user, db_session)
+        new_user = self.user_repository.create_user(new_user, db_session)
+
+        return UserDto(new_user)
+
+    async def get_all_users(self, db_session: Session) -> List[UserDto]:
+        all_users = self.user_repository.get_all_users(db_session)
+
+        return [UserDto(user) for user in all_users]
+
+    async def get_user_by_id(self, user_id: str, db_session: Session) -> Optional[UserDto]:
+        user = self.user_repository.find_user_by_id(user_id, db_session)
+
+        if not user:
+            raise NotFoundException('The user with this id does not exist in the system.')
+
+        return UserDto(user)
+
+    async def delete_user_by_id(self, user_id: str, db_session: Session) -> None:
+        self.user_repository.delete_user_by_id(user_id, db_session)
+
+    # PRIVATE METHODS
+    async def __verify_email_exist(self, email: str, db_session: Session) -> Optional[User]:
+        return self.user_repository.find_user_by_email(email, db_session)

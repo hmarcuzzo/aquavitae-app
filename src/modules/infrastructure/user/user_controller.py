@@ -1,25 +1,33 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from typing import List
+
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from src.modules.infrastructure import database as db
-from . import user_service
-from .dto import user_dto
-from .entities.user_entity import User
+from .user_service import UserService
+from .dto.create_user_dto import CreateUserDto
+from .dto.user_dto import UserDto
 
 user_router = APIRouter(tags=['Users'], prefix='/user')
 
-user_service = user_service.UserService()
+user_service = UserService()
 
 
 @user_router.post('/create', status_code=status.HTTP_201_CREATED)
-async def create_user_registration(request: user_dto.UserDto, database: Session = Depends(db.get_db)) -> User:
-    user = await user_service.verify_email_exist(request.email, database)
+async def create_user(request: CreateUserDto, database: Session = Depends(db.get_db)) -> UserDto:
+    return await user_service.create_user(request, database)
 
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail='The user with this email already exists in the system.'
-        )
 
-    new_user = await user_service.new_user_register(request, database)
-    return new_user
+@user_router.get('/get')
+async def get_all_users(database: Session = Depends(db.get_db)) -> List[UserDto]:
+    return await user_service.get_all_users(database)
+
+
+@user_router.get('/get/{id}')
+async def get_user_by_id(id: str, database: Session = Depends(db.get_db)) -> UserDto:
+    return await user_service.get_user_by_id(id, database)
+
+
+@user_router.delete('/delete/{id}')
+async def delete_user_by_id(id: str, database: Session = Depends(db.get_db)) -> UserDto:
+    return await user_service.delete_user_by_id(id, database)
