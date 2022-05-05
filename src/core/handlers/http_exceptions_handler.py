@@ -1,7 +1,10 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+import json
+from datetime import datetime
+
+from fastapi import FastAPI, Request, Response
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
+from src.core.common.dto.exception_response_dto import ExceptionResponseDto
 from src.core.types.exceptions_type import BadRequestException, NotFoundException
 
 
@@ -12,15 +15,38 @@ class HttpExceptionsHandler:
 
     def add_exceptions_handler(self):
         @self.app.exception_handler(BadRequestException)
-        async def bad_request_exception_handler(request: Request, exc: BadRequestException) -> JSONResponse:
-            return JSONResponse(
+        async def bad_request_exception_handler(request: Request, exc: BadRequestException) -> Response:
+            return Response(
                 status_code=HTTP_400_BAD_REQUEST,
-                content={"message": exc.message},
+                content=json.dumps(
+                    self.global_exception_error_message(
+                        status_code=HTTP_400_BAD_REQUEST,
+                        message=exc.message,
+                        request=request,
+                    ).__dict__
+                )
             )
 
         @self.app.exception_handler(NotFoundException)
-        async def not_found_exception_handler(request: Request, exc: NotFoundException) -> JSONResponse:
-            return JSONResponse(
+        async def not_found_exception_handler(request: Request, exc: NotFoundException) -> Response:
+            return Response(
                 status_code=HTTP_404_NOT_FOUND,
-                content={"message": exc.message},
+                content=json.dumps(
+                    self.global_exception_error_message(
+                        status_code=HTTP_404_NOT_FOUND,
+                        message=exc.message,
+                        request=request,
+                    ).__dict__
+                )
             )
+
+    def global_exception_error_message(
+            self, status_code: int, message: str, request: Request
+    ) -> ExceptionResponseDto:
+        return ExceptionResponseDto(
+            status_code=status_code,
+            message=message,
+            timestamp=str(datetime.now()),
+            path=request.url.path,
+            method=request.method,
+        )
