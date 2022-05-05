@@ -28,7 +28,7 @@ class UserService:
     async def get_all_users(self, db_session: Session) -> List[UserDto]:
         all_users = self.user_repository.get_all_users(db_session)
 
-        return [UserDto(user) for user in all_users]
+        return list(map(UserDto, all_users))
 
     async def get_user_by_id(self, user_id: str, db_session: Session) -> Optional[UserDto]:
         user = self.user_repository.find_user_by_id(user_id, db_session)
