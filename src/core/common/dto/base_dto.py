@@ -1,7 +1,7 @@
 from sqlalchemy import DateTime
 from sqlalchemy.dialects.postgresql import UUID
 
-from src.core.common.base_entity import BaseEntity
+from src.modules.infrastructure.database.base_entity import BaseEntity
 
 
 class BaseOptionsDto:

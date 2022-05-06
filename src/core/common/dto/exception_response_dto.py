@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from src.core.common.dto.base_response_dto import BaseResponseDto
 
 
