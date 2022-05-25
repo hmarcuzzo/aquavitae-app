@@ -14,6 +14,13 @@ class User(BaseEntity):
     password: str = Column(String(120), nullable=False)
     role: UserRole = Column(Enum(UserRole), nullable=False, default=UserRole.USER)
 
+    def __init__(self, name: str, email: str, password: str, role: UserRole = UserRole.USER, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = name
+        self.email = email
+        self.password = password
+        self.role = role
+
     def check_password(self, password: str) -> bool:
         return validate_hash(password, self.password)
 

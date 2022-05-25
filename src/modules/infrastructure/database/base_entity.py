@@ -20,6 +20,9 @@ class BaseEntity(Base):
     updated_at: DateTime = Column(DateTime, nullable=False, default=datetime.now())
     deleted_at: DateTime = Column(DateTime, nullable=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     # Generate __tablename__ automatically
     @declared_attr
     def __tablename__(self) -> str:
