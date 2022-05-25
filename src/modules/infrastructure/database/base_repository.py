@@ -4,6 +4,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeMeta, lazyload, Query, Session
 from sqlalchemy.sql.elements import and_
 
+from src.core.types.delete_result_type import DeleteResult
 from src.core.types.exceptions_type import InternalServerError, NotFoundException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
@@ -15,6 +16,7 @@ class BaseRepository:
     def __init__(self, entity: DeclarativeMeta):
         self.entity = entity
 
+    # ----------- PRIVATE METHODS -----------
     @classmethod
     def __apply_options(
             cls, query: Query, options_dict: Union[FindManyOptions, FindManyOptions] = None
@@ -50,22 +52,12 @@ class BaseRepository:
 
         return options_dict
 
-    def __generate_find_one_options_dict(
-            self, id: Union[str, int], options_dict: Union[FindOneOptions, None]
-    ) -> FindOneOptions:
-        if options_dict is None:
-            options_dict = {}
+    def __generate_find_one_options_dict(self, criteria: Union[str, int]) -> FindOneOptions:
+        return {
+            'where': [inspect(self.entity).primary_key[0] == criteria]
+        }
 
-        if id is not None:
-            self.__fix_options_dict(options_dict)
-
-            if 'where' not in options_dict:
-                options_dict['where'] = []
-
-            options_dict['where'] += [inspect(self.entity).primary_key[0] == id]
-
-        return options_dict
-
+    # ----------- PUBLIC METHODS -----------
     def find(self, db: Session, options_dict: FindManyOptions = None) -> Optional[List[type(entity)]]:
         query = db.query(self.entity)
 
@@ -81,32 +73,28 @@ class BaseRepository:
         query = self.__apply_options(query, options_dict)
         return query.all(), count
 
-    def find_one(
-            self, db: Session, id: Union[str, int] = None, options_dict: FindOneOptions = None
-    ) -> Optional[type(entity)]:
+    def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:
         query = db.query(self.entity)
 
-        if id is not None:
-            options_dict = self.__generate_find_one_options_dict(id, options_dict)
-        query = self.__apply_options(query, options_dict)
+        if isinstance(criteria, str) or isinstance(criteria, int):
+            criteria = self.__generate_find_one_options_dict(criteria)
+        query = self.__apply_options(query, criteria)
+
         try:
             return query.first()
-        except Exception as e:
+        except Exception:
             return None
 
-    def find_one_or_fail(
-            self, db: Session, id: Union[str, int] = None, options_dict: FindOneOptions = None
-    ) -> Optional[type(entity)]:
-        result = self.find_one(db, id, options_dict)
+    def find_one_or_fail(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:
+        result = self.find_one(db, criteria)
 
         if result is None:
             message = f'Could not find any entity of type "{self.entity.__name__}" matching: '
-            if options_dict is not None:
-                raise NotFoundException(
-                    message + f'"{[clause.right.value for clause in options_dict["where"]]}"'
-                )
+            if type(criteria) is FindOneOptions or type(criteria) is dict:
+                message += f'"{[clause.right.value for clause in criteria["where"]]}"'
             else:
-                raise NotFoundException(message + f'"{id}"')
+                message += f'"{criteria}"'
+            raise NotFoundException(message)
 
         return result
 
@@ -119,11 +107,10 @@ class BaseRepository:
         db.refresh(_entity)
         return _entity
 
-    def delete(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[Any]:
-        if isinstance(criteria, str) or isinstance(criteria, int):
-            entity = self.find_one_or_fail(db, id=criteria)
-        else:
-            entity = self.find_one_or_fail(db, options_dict=criteria)
+    def delete(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[DeleteResult]:
+        entity = self.find_one_or_fail(db, criteria)
 
         db.delete(entity)
         db.commit()
+
+        return DeleteResult(raw=[], affected=1)
