@@ -18,29 +18,26 @@ class UserService:
         user = await self.__verify_email_exist(user_dto.email, db_session)
 
         if user:
-            raise BadRequestException('The user with this email already exists in the system.')
+            raise BadRequestException(f'An "User" with email {user_dto.email} already exists.')
 
         new_user = User(name=user_dto.name, email=user_dto.email, password=user_dto.password)
-        new_user = self.user_repository.create_user(new_user, db_session)
+        new_user = self.user_repository.create(db_session, new_user)
 
-        return UserDto(new_user)
+        return UserDto(self.user_repository.save(db_session, new_user))
 
-    async def get_all_users(self, db_session: Session) -> List[UserDto]:
-        all_users = self.user_repository.get_all_users(db_session)
+    async def get_all_users(self, db_session: Session) -> Optional[List[UserDto]]:
+        all_users = self.user_repository.find(db_session)
 
         return list(map(UserDto, all_users))
 
     async def get_user_by_id(self, user_id: str, db_session: Session) -> Optional[UserDto]:
-        user = self.user_repository.find_user_by_id(user_id, db_session)
-
-        if not user:
-            raise NotFoundException('The user with this id does not exist in the system.')
+        user = self.user_repository.find_one_or_fail(db_session, id=user_id)
 
         return UserDto(user)
 
-    async def delete_user_by_id(self, user_id: str, db_session: Session) -> None:
-        self.user_repository.delete_user_by_id(user_id, db_session)
+    async def delete_user(self, user_id: str, db_session: Session) -> None:
+        self.user_repository.delete(db_session, user_id)
 
     # PRIVATE METHODS
     async def __verify_email_exist(self, email: str, db_session: Session) -> Optional[User]:
-        return self.user_repository.find_user_by_email(email, db_session)
+        return self.user_repository.find_one(db_session, options_dict={'where': User.email == email})
