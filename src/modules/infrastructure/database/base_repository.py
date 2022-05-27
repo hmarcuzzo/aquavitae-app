@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional, Tuple, Union
 
+from pydantic.main import BaseModel
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeMeta, lazyload, Query, Session
 from sqlalchemy.sql.elements import and_
@@ -11,7 +12,6 @@ from src.core.types.exceptions_type import InternalServerError, NotFoundExceptio
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
-from src.core.utils.dictionary_utils import remove_none_values
 
 
 class BaseRepository:
@@ -121,26 +121,31 @@ class BaseRepository:
 
     async def soft_delete(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[UpdateResult]:
         entity = await self.find_one_or_fail(db, criteria)
-
         columns = get_columns(self.entity)
 
+        has_deleted_column = False
         for column in columns:
             if 'delete_column' in column.info:
                 setattr(entity, column.name, datetime.now())
-        db.commit()
+                has_deleted_column = True
 
-        return UpdateResult(raw=[], affected=1, generatedMaps=[])
+        if has_deleted_column:
+            db.commit()
+
+            return UpdateResult(raw=[], affected=1, generatedMaps=[])
+
+        raise InternalServerError('Could not find any column with "delete_column" metadata')
 
     async def update(
-            self, db: Session, criteria: Union[str, int, FindOneOptions], partialEntity: dict
+            self, db: Session, criteria: Union[str, int, FindOneOptions], partial_entity: BaseModel
     ) -> Optional[UpdateResult]:
         entity = await self.find_one_or_fail(db, criteria)
 
-        columns = get_columns(self.entity)
-        partialEntity = remove_none_values(partialEntity)
-        for column in columns:
-            if column.name in partialEntity:
-                setattr(entity, column.name, partialEntity[column.name])
+        partial_entity_data = partial_entity.dict(exclude_unset=True)
+
+        for key, value in partial_entity_data.items():
+            setattr(entity, key, value)
+
         db.commit()
 
         return UpdateResult(raw=[], affected=1, generatedMaps=[])

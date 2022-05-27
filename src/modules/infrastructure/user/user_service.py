@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from src.core.types.exceptions_type import BadRequestException
 from src.core.types.update_result_type import UpdateResult
 from .dto.create_user_dto import CreateUserDto
+from .dto.update_user_dto import UpdateUserDto
 from .dto.user_dto import UserDto
 from .entities.user_entity import User
 from .user_repository import UserRepository
@@ -39,8 +40,10 @@ class UserService:
     async def delete_user(self, user_id: str, db_session: Session) -> Optional[UpdateResult]:
         return await self.user_repository.soft_delete(db_session, user_id)
 
-    async def update_user(self, user_id: str, update_user_dto, database: Session) -> Optional[UpdateResult]:
-        return await self.user_repository.update(database, user_id, update_user_dto.__dict__)
+    async def update_user(
+            self, user_id: str, update_user_dto: UpdateUserDto, database: Session
+    ) -> Optional[UpdateResult]:
+        return await self.user_repository.update(database, user_id, update_user_dto)
 
     # PRIVATE METHODS
     async def __verify_email_exist(self, email: str, db_session: Session) -> Optional[User]:

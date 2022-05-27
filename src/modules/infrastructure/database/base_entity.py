@@ -39,7 +39,7 @@ def set_before_insert(mapper, connection, target: BaseEntity) -> None:
     target.updated_at = now
 
 
-@event.listens_for(BaseEntity, 'before_update')
+@event.listens_for(BaseEntity, 'before_update', propagate=True)
 def set_before_update(mapper, connection, target: BaseEntity) -> None:
     if target.deleted_at:
         target.updated_at = target.deleted_at
