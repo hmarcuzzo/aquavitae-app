@@ -1,12 +1,13 @@
+from typing import TypedDict
+
 from sqlalchemy import DateTime
 from sqlalchemy.dialects.postgresql import UUID
 
 from src.modules.infrastructure.database.base_entity import BaseEntity
 
 
-class BaseOptionsDto:
-    def __init__(self, excludeFields: bool = False):
-        self.excludeFields = excludeFields
+class BaseOptionsDto(TypedDict):
+    excludeFields: bool
 
 
 class BaseDto:
@@ -16,7 +17,7 @@ class BaseDto:
     deleted_at: DateTime
 
     def __init__(self, entity: BaseEntity, options: BaseOptionsDto = None):
-        if not options or not options.excludeFields:
+        if not options or not options['excludeFields']:
             self.id = entity.id
             self.created_at = entity.created_at
             self.updated_at = entity.updated_at

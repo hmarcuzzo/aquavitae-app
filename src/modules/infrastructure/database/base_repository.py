@@ -1,13 +1,17 @@
-from typing import Any, List, Optional, Tuple, Union
+from datetime import datetime
+from typing import List, Optional, Tuple, Union
 
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeMeta, lazyload, Query, Session
 from sqlalchemy.sql.elements import and_
+from sqlalchemy_utils import get_columns
 
 from src.core.types.delete_result_type import DeleteResult
 from src.core.types.exceptions_type import InternalServerError, NotFoundException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
+from src.core.types.update_result_type import UpdateResult
+from src.core.utils.dictionary_utils import remove_none_values
 
 
 class BaseRepository:
@@ -21,7 +25,7 @@ class BaseRepository:
     def __apply_options(
             cls, query: Query, options_dict: Union[FindManyOptions, FindManyOptions] = None
     ) -> Query:
-        if options_dict is None:
+        if not options_dict:
             return query
 
         options_dict = cls.__fix_options_dict(options_dict)
@@ -58,13 +62,13 @@ class BaseRepository:
         }
 
     # ----------- PUBLIC METHODS -----------
-    def find(self, db: Session, options_dict: FindManyOptions = None) -> Optional[List[type(entity)]]:
+    async def find(self, db: Session, options_dict: FindManyOptions = None) -> Optional[List[type(entity)]]:
         query = db.query(self.entity)
 
         query = self.__apply_options(query, options_dict)
         return query.all()
 
-    def find_and_count(
+    async def find_and_count(
             self, db: Session, options_dict: FindManyOptions = None
     ) -> Optional[Tuple[List[type(entity)], int]]:
         query = db.query(self.entity)
@@ -73,7 +77,7 @@ class BaseRepository:
         query = self.__apply_options(query, options_dict)
         return query.all(), count
 
-    def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:
+    async def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:
         query = db.query(self.entity)
 
         if isinstance(criteria, str) or isinstance(criteria, int):
@@ -85,10 +89,10 @@ class BaseRepository:
         except Exception:
             return None
 
-    def find_one_or_fail(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:
-        result = self.find_one(db, criteria)
+    async def find_one_or_fail(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:
+        result = await self.find_one(db, criteria)
 
-        if result is None:
+        if not result:
             message = f'Could not find any entity of type "{self.entity.__name__}" matching: '
             if type(criteria) is FindOneOptions or type(criteria) is dict:
                 message += f'"{[clause.right.value for clause in criteria["where"]]}"'
@@ -98,7 +102,7 @@ class BaseRepository:
 
         return result
 
-    def create(self, db: Session, _entity: type(entity)) -> type(entity):
+    async def create(self, db: Session, _entity: type(entity)) -> type(entity):
         db.add(_entity)
         return _entity
 
@@ -107,10 +111,36 @@ class BaseRepository:
         db.refresh(_entity)
         return _entity
 
-    def delete(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[DeleteResult]:
-        entity = self.find_one_or_fail(db, criteria)
+    async def delete(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[DeleteResult]:
+        entity = await self.find_one_or_fail(db, criteria)
 
         db.delete(entity)
         db.commit()
 
         return DeleteResult(raw=[], affected=1)
+
+    async def soft_delete(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[UpdateResult]:
+        entity = await self.find_one_or_fail(db, criteria)
+
+        columns = get_columns(self.entity)
+
+        for column in columns:
+            if 'delete_column' in column.info:
+                setattr(entity, column.name, datetime.now())
+        db.commit()
+
+        return UpdateResult(raw=[], affected=1, generatedMaps=[])
+
+    async def update(
+            self, db: Session, criteria: Union[str, int, FindOneOptions], partialEntity: dict
+    ) -> Optional[UpdateResult]:
+        entity = await self.find_one_or_fail(db, criteria)
+
+        columns = get_columns(self.entity)
+        partialEntity = remove_none_values(partialEntity)
+        for column in columns:
+            if column.name in partialEntity:
+                setattr(entity, column.name, partialEntity[column.name])
+        db.commit()
+
+        return UpdateResult(raw=[], affected=1, generatedMaps=[])
