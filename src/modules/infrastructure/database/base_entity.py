@@ -5,8 +5,8 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, event
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import DeclarativeMeta, Query
 from sqlalchemy_utils import get_columns
 
 from src.modules.infrastructure.database.base import Base
@@ -20,7 +20,7 @@ class BaseEntity(Base):
     id: UUID = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at: DateTime = Column(DateTime, nullable=False, default=datetime.now())
     updated_at: DateTime = Column(DateTime, nullable=False, default=datetime.now())
-    deleted_at: DateTime = Column(DateTime, nullable=True, info={'delete_column': True})
+    deleted_at: DateTime = Column(DateTime, nullable=True, info={ 'delete_column': True })
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,12 +48,26 @@ def set_before_update(mapper, connection, target: BaseEntity) -> None:
 
 
 # add filter to remove deleted entities by default every time a query of this class is executed
-@event.listens_for(Engine, "before_execute", retval=True)
-def no_deleted(conn, clauseelement, multiparams, params):
-    if clauseelement.is_selectable:
-        columns = get_columns(clauseelement.column_descriptions[0]['type'])
-        for column in columns:
-            if 'delete_column' in column.info:
-                clauseelement.append_whereclause(column == None)
+@event.listens_for(Query, "before_compile", retval=True)
+def no_deleted(query: Query) -> Query:
+    columns = [] if not isinstance(query.column_descriptions[0]['type'], DeclarativeMeta) \
+        else get_columns(query.column_descriptions[0]['type'])
 
-    return clauseelement, multiparams, params
+    for column in columns:
+        if 'delete_column' in column.info and column.info['delete_column']:
+            query = query.enable_assertions(False).where(column == None)
+            break
+
+    return query
+
+# @event.listens_for(Session, "do_orm_execute")
+# def _do_orm_execute(orm_execute_state):
+#     if orm_execute_state.is_select:
+#         query: Select = orm_execute_state.statement
+#         columns = [] if not isinstance(query.column_descriptions[0]['entity'], DeclarativeMeta) \
+#             else get_columns(query.column_descriptions[0]['entity'])
+#
+#         for column in columns:
+#             if 'delete_column' in column.info and column.info['delete_column']:
+#                 orm_execute_state.statement = orm_execute_state.statement.where(column == None)
+#                 break
