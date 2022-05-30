@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional, Tuple, Union
 
-from pydantic.main import BaseModel
+from pydantic import BaseModel
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeMeta, lazyload, Query, Session
 from sqlalchemy.sql.elements import and_
@@ -80,7 +80,7 @@ class BaseRepository:
     async def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:
         query = db.query(self.entity)
 
-        if isinstance(criteria, str) or isinstance(criteria, int):
+        if isinstance(criteria, (str, int)):
             criteria = self.__generate_find_one_options_dict(criteria)
         query = self.__apply_options(query, criteria)
 
@@ -102,11 +102,15 @@ class BaseRepository:
 
         return result
 
-    async def create(self, db: Session, _entity: type(entity)) -> type(entity):
+    async def create(self, db: Session, _entity: Union[type(entity), BaseModel]) -> type(entity):
+        if isinstance(_entity, BaseModel):
+            partial_data_entity = _entity.dict(exclude_unset=True)
+            _entity = self.entity(**partial_data_entity)
+
         db.add(_entity)
         return _entity
 
-    def save(self, db: Session, _entity: type(entity)) -> Optional[type(entity)]:
+    async def save(self, db: Session, _entity: type(entity)) -> Optional[type(entity)]:
         db.commit()
         db.refresh(_entity)
         return _entity
@@ -123,16 +127,11 @@ class BaseRepository:
         entity = await self.find_one_or_fail(db, criteria)
         columns = get_columns(self.entity)
 
-        has_deleted_column = False
         for column in columns:
             if 'delete_column' in column.info:
                 setattr(entity, column.name, datetime.now())
-                has_deleted_column = True
-
-        if has_deleted_column:
-            db.commit()
-
-            return UpdateResult(raw=[], affected=1, generatedMaps=[])
+                db.commit()
+                return UpdateResult(raw=[], affected=1, generatedMaps=[])
 
         raise InternalServerError('Could not find any column with "delete_column" metadata')
 
@@ -142,10 +141,8 @@ class BaseRepository:
         entity = await self.find_one_or_fail(db, criteria)
 
         partial_entity_data = partial_entity.dict(exclude_unset=True)
-
         for key, value in partial_entity_data.items():
             setattr(entity, key, value)
 
         db.commit()
-
         return UpdateResult(raw=[], affected=1, generatedMaps=[])

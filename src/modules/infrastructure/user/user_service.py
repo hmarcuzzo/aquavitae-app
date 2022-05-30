@@ -22,10 +22,9 @@ class UserService:
         if user:
             raise BadRequestException(f'An "User" with email {user_dto.email} already exists.')
 
-        new_user = User(name=user_dto.name, email=user_dto.email, password=user_dto.password)
-        new_user = await self.user_repository.create(db_session, new_user)
+        new_user = await self.user_repository.create(db_session, user_dto)
 
-        return UserDto(self.user_repository.save(db_session, new_user))
+        return UserDto(await self.user_repository.save(db_session, new_user))
 
     async def get_all_users(self, db_session: Session) -> Optional[List[UserDto]]:
         all_users = await self.user_repository.find(db_session)
