@@ -21,14 +21,14 @@ class BaseRepository:
         self.entity = entity
 
     # ----------- PRIVATE METHODS -----------
-    @classmethod
     def __apply_options(
-            cls, query: Query, options_dict: Union[FindManyOptions, FindManyOptions] = None
+            self, query: Query, options_dict: Union[FindManyOptions, FindManyOptions] = None
     ) -> Query:
         if not options_dict:
             return query
 
-        options_dict = cls.__fix_options_dict(options_dict)
+        options_dict = self.__fix_options_dict(options_dict)
+        query = query.enable_assertions(False)
 
         for key in options_dict.keys():
             if key == 'where':
@@ -73,8 +73,8 @@ class BaseRepository:
     ) -> Optional[Tuple[List[type(entity)], int]]:
         query = db.query(self.entity)
 
-        count = self.__apply_options(query).count()
         query = self.__apply_options(query, options_dict)
+        count = query.offset(None).limit(None).count()
         return query.all(), count
 
     async def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:

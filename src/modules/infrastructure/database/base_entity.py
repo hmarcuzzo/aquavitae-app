@@ -50,8 +50,8 @@ def set_before_update(mapper, connection, target: BaseEntity) -> None:
 # add filter to remove deleted entities by default every time a query of this class is executed
 @event.listens_for(Query, "before_compile", retval=True)
 def no_deleted(query: Query) -> Query:
-    columns = [] if not isinstance(query.column_descriptions[0]['enity'], DeclarativeMeta) \
-        else get_columns(query.column_descriptions[0]['enity'])
+    columns = [] if not isinstance(query.column_descriptions[0]['entity'], DeclarativeMeta) \
+        else get_columns(query.column_descriptions[0]['entity'])
 
     for column in columns:
         if 'delete_column' in column.info and column.info['delete_column']:
