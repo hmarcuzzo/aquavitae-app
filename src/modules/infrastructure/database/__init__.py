@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
-from src.modules.infrastructure.database.session import SessionLocal
+import src.modules.infrastructure.database.soft_delete_filter
+from .session import SessionLocal
 
 
 def get_db() -> Session:

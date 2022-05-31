@@ -6,8 +6,6 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, event
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import DeclarativeMeta, Query
-from sqlalchemy_utils import get_columns
 
 from src.modules.infrastructure.database.base import Base
 
@@ -45,17 +43,3 @@ def set_before_update(mapper, connection, target: BaseEntity) -> None:
         target.updated_at = target.deleted_at
     else:
         target.updated_at = datetime.now()
-
-
-# add filter to remove deleted entities by default every time a query of this class is executed
-@event.listens_for(Query, "before_compile", retval=True)
-def no_deleted(query: Query) -> Query:
-    columns = [] if not isinstance(query.column_descriptions[0]['entity'], DeclarativeMeta) \
-        else get_columns(query.column_descriptions[0]['entity'])
-
-    for column in columns:
-        if 'delete_column' in column.info and column.info['delete_column']:
-            query = query.enable_assertions(False).where(column == None)
-            break
-
-    return query

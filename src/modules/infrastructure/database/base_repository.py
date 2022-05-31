@@ -4,7 +4,6 @@ from typing import List, Optional, Tuple, Union
 from pydantic import BaseModel
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeMeta, lazyload, Query, Session
-from sqlalchemy.sql.elements import and_
 from sqlalchemy_utils import get_columns
 
 from src.core.types.delete_result_type import DeleteResult
@@ -12,6 +11,7 @@ from src.core.types.exceptions_type import InternalServerError, NotFoundExceptio
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
+from .soft_delete_filter import pause_listener
 
 
 class BaseRepository:
@@ -19,6 +19,7 @@ class BaseRepository:
 
     def __init__(self, entity: DeclarativeMeta):
         self.entity = entity
+        self.with_deleted = False
 
     # ----------- PRIVATE METHODS -----------
     def __apply_options(
@@ -32,7 +33,7 @@ class BaseRepository:
 
         for key in options_dict.keys():
             if key == 'where':
-                query = query.where((and_(*options_dict['where'])))
+                query = query.where(*options_dict['where'])
             elif key == 'order_by':
                 query = query.order_by(*options_dict['order_by'])
             elif key == 'skip':
@@ -41,6 +42,8 @@ class BaseRepository:
                 query = query.limit(options_dict['take'])
             elif key == 'relations':
                 query = query.options(lazyload(*options_dict['relations']))  # TODO: Not tested yet
+            elif key == 'with_deleted':
+                self.with_deleted = options_dict['with_deleted']
             else:
                 raise InternalServerError(f'Unknown option: {key} in FindOptions')
 
@@ -66,7 +69,9 @@ class BaseRepository:
         query = db.query(self.entity)
 
         query = self.__apply_options(query, options_dict)
-        return query.all()
+        with pause_listener.pause(self.with_deleted):
+            self.with_deleted = False
+            return query.all()
 
     async def find_and_count(
             self, db: Session, options_dict: FindManyOptions = None
@@ -74,8 +79,10 @@ class BaseRepository:
         query = db.query(self.entity)
 
         query = self.__apply_options(query, options_dict)
-        count = query.offset(None).limit(None).count()
-        return query.all(), count
+        with pause_listener.pause(self.with_deleted):
+            self.with_deleted = False
+            count = query.offset(None).limit(None).count()
+            return query.all(), count
 
     async def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[type(entity)]:
         query = db.query(self.entity)
@@ -85,7 +92,9 @@ class BaseRepository:
         query = self.__apply_options(query, criteria)
 
         try:
-            return query.first()
+            with pause_listener.pause(self.with_deleted):
+                self.with_deleted = False
+                return query.first()
         except Exception:
             return None
 

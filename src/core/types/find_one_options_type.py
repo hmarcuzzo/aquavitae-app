@@ -6,3 +6,4 @@ class FindOneOptions(TypedDict):
     order_by: Any
     options: Any
     relations: Any
+    with_deleted: bool

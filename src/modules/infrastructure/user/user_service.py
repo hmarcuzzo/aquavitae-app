@@ -47,4 +47,3 @@ class UserService:
     # PRIVATE METHODS
     async def __verify_email_exist(self, email: str, db_session: Session) -> Optional[User]:
         return await self.user_repository.find_one(db_session, {'where': User.email == email})
-
