@@ -75,6 +75,7 @@ SQLAlchemy = "==1.4.36"
 SQLAlchemy-Utils = "==0.38.2"
 packaging = "==21.0"
 auto-changelog = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
