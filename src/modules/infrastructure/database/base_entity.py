@@ -18,9 +18,9 @@ class BaseEntity(Base):
     __name__: str
 
     id: UUID = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at: DateTime = Column(DateTime, nullable=False, default=datetime.now())
-    updated_at: DateTime = Column(DateTime, nullable=False, default=datetime.now())
-    deleted_at: DateTime = Column(DateTime, nullable=True, info={ 'delete_column': True })
+    created_at: DateTime = Column(DateTime(timezone=True), nullable=False)
+    updated_at: DateTime = Column(DateTime(timezone=True), nullable=False)
+    deleted_at: DateTime = Column(DateTime(timezone=True), nullable=True, info={'delete_column': True})
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,12 +31,12 @@ class BaseEntity(Base):
         return '_'.join(re.findall('[A-Z][^A-Z]*', self.__name__)).lower()
 
 
-@event.listens_for(BaseEntity, 'before_insert')
+@event.listens_for(BaseEntity, 'before_insert', propagate=True)
 def set_before_insert(mapper, connection, target: BaseEntity) -> None:
-    now = datetime.now()
-
-    target.created_at = now
-    target.updated_at = now
+    if not target.created_at:
+        target.created_at = datetime.now()
+    if not target.updated_at or target.updated_at < target.created_at:
+        target.updated_at = target.created_at
 
 
 @event.listens_for(BaseEntity, 'before_update', propagate=True)

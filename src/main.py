@@ -1,5 +1,9 @@
+import os
+import time
+
 from fastapi import FastAPI
 
+import config
 from src.core.handlers.http_exceptions_handler import HttpExceptionsHandler
 from src.modules.app import app_routers
 
@@ -14,3 +18,6 @@ app.include_router(app_routers)
 # Register all custom exception handler
 HttpExceptionsHandler(app)
 
+# Set the default timezone of the application
+os.environ['TZ'] = config.APP_TZ
+time.tzset()
