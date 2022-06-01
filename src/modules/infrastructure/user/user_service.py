@@ -19,7 +19,7 @@ class UserService:
         user = await self.__verify_email_exist(user_dto.email, db_session)
 
         if user:
-            raise BadRequestException(f'An "User" with email {user_dto.email} already exists.')
+            raise BadRequestException(f'An "User" with email {user_dto.email} already exists.', ['User', 'email'])
 
         new_user = await self.user_repository.create(db_session, user_dto)
 

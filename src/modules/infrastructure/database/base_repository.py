@@ -102,12 +102,8 @@ class BaseRepository:
         result = await self.find_one(db, criteria)
 
         if not result:
-            message = f'Could not find any entity of type "{self.entity.__name__}" matching: '
-            if type(criteria) is FindOneOptions or type(criteria) is dict:
-                message += f'"{[clause.right.value for clause in criteria["where"]]}"'
-            else:
-                message += f'"{criteria}"'
-            raise NotFoundException(message)
+            message = f'Could not find any entity of type "{self.entity.__name__}" that matches the criteria'
+            raise NotFoundException(message, [self.entity.__name__, str(criteria)])     # TODO: Resolver criteria
 
         return result
 
