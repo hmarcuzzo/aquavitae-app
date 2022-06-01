@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqlalchemy import Column, Enum, event, String
+from sqlalchemy import Column, Enum, event, String, UniqueConstraint
 
 from src.core.constants.enum.user_role import UserRole
 from src.core.utils.hash_utils import generate_hash, validate_hash
@@ -10,9 +10,13 @@ from src.modules.infrastructure.database.base_entity import BaseEntity
 @dataclass
 class User(BaseEntity):
     name: str = Column(String(255), nullable=False)
-    email: str = Column(String(120), unique=True, nullable=False)
+    email: str = Column(String(120), nullable=False)
     password: str = Column(String(120), nullable=False)
     role: UserRole = Column(Enum(UserRole), nullable=False, default=UserRole.USER)
+
+    __table_args__ = (
+        UniqueConstraint('email', 'deleted_at', name='unique_user_email_active'),
+    )
 
     def __init__(self, name: str, email: str, password: str, role: UserRole = UserRole.USER, *args, **kwargs):
         super().__init__(*args, **kwargs)
