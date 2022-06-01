@@ -1,24 +1,16 @@
-from typing import TypedDict
+from datetime import datetime
+from typing import Optional, TypedDict
+from uuid import UUID
 
-from sqlalchemy import DateTime
-from sqlalchemy.dialects.postgresql import UUID
-
-from src.modules.infrastructure.database.base_entity import BaseEntity
+from pydantic import BaseModel
 
 
 class BaseOptionsDto(TypedDict):
     excludeFields: bool
 
 
-class BaseDto:
+class BaseDto(BaseModel):
     id: UUID
-    created_at: DateTime
-    updated_at: DateTime
-    deleted_at: DateTime
-
-    def __init__(self, entity: BaseEntity, options: BaseOptionsDto = None):
-        if not options or not options['excludeFields']:
-            self.id = entity.id
-            self.created_at = entity.created_at
-            self.updated_at = entity.updated_at
-            self.deleted_at = entity.deleted_at
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime]

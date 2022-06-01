@@ -13,7 +13,6 @@ from src.modules.infrastructure.database.base import Base
 @dataclass
 class BaseEntity(Base):
     __abstract__ = True
-    __name__: str
 
     id: UUID = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at: DateTime = Column(DateTime(timezone=True), nullable=False)

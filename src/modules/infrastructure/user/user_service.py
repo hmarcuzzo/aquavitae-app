@@ -6,7 +6,6 @@ from src.core.types.exceptions_type import BadRequestException
 from src.core.types.update_result_type import UpdateResult
 from .dto.create_user_dto import CreateUserDto
 from .dto.update_user_dto import UpdateUserDto
-from .dto.user_dto import UserDto
 from .entities.user_entity import User
 from .user_repository import UserRepository
 
@@ -16,7 +15,7 @@ class UserService:
         self.user_repository = UserRepository()
 
     # PUBLIC METHODS
-    async def create_user(self, user_dto: CreateUserDto, db_session: Session) -> Optional[UserDto]:
+    async def create_user(self, user_dto: CreateUserDto, db_session: Session) -> Optional[User]:
         user = await self.__verify_email_exist(user_dto.email, db_session)
 
         if user:
@@ -24,17 +23,17 @@ class UserService:
 
         new_user = await self.user_repository.create(db_session, user_dto)
 
-        return UserDto(await self.user_repository.save(db_session, new_user))
+        return await self.user_repository.save(db_session, new_user)
 
-    async def get_all_users(self, db_session: Session) -> Optional[List[UserDto]]:
+    async def get_all_users(self, db_session: Session) -> Optional[List[User]]:
         all_users = await self.user_repository.find(db_session)
 
-        return list(map(UserDto, all_users))
+        return all_users
 
-    async def get_user_by_id(self, user_id: str, db_session: Session) -> Optional[UserDto]:
+    async def get_user_by_id(self, user_id: str, db_session: Session) -> Optional[User]:
         user = await self.user_repository.find_one_or_fail(db_session, user_id)
 
-        return UserDto(user)
+        return user
 
     async def delete_user(self, user_id: str, db_session: Session) -> Optional[UpdateResult]:
         return await self.user_repository.soft_delete(db_session, user_id)
