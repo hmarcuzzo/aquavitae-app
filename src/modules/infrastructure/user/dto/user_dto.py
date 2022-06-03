@@ -1,7 +1,15 @@
-from pydantic import BaseModel, constr, EmailStr
+from datetime import datetime
+from typing import Optional
+
+from src.core.common.dto.base_dto import BaseDto
+from src.core.constants.enum.user_role import UserRole
 
 
-class UserDto(BaseModel):
-    name: constr(min_length=2, max_length=50)
-    email: EmailStr
-    password: str
+class UserDto(BaseDto):
+    name: str
+    email: str
+    role: UserRole
+    last_access: Optional[datetime]
+
+    class Config:
+        orm_mode = True
