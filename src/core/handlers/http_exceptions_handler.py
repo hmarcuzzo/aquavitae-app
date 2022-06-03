@@ -3,11 +3,15 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import (HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND,
+                              HTTP_500_INTERNAL_SERVER_ERROR)
 
 from src.core.common.dto.detail_response_dto import DetailResponseDto
 from src.core.common.dto.exception_response_dto import ExceptionResponseDto
-from src.core.types.exceptions_type import BadRequestException, InternalServerError, NotFoundException
+from src.core.types.exceptions_type import (BadRequestException, ForbiddenException, InternalServerError,
+                                            NotFoundException,
+                                            UnauthorizedException)
+from src.core.utils.dictionary_utils import DictionaryUtils
 
 
 class HttpExceptionsHandler:
@@ -42,6 +46,38 @@ class HttpExceptionsHandler:
                 )
             )
 
+        @self.app.exception_handler(UnauthorizedException)
+        async def unauthorized_exception_handler(
+                request: Request,
+                exc: UnauthorizedException
+        ) -> Response:
+            return Response(
+                status_code=HTTP_401_UNAUTHORIZED,
+                content=json.dumps(
+                    self.global_exception_error_message(
+                        status_code=HTTP_401_UNAUTHORIZED,
+                        exc=exc,
+                        request=request,
+                    ).__dict__
+                )
+            )
+
+        @self.app.exception_handler(ForbiddenException)
+        async def forbidden_exception_handler(
+                request: Request,
+                exc: ForbiddenException
+        ) -> Response:
+            return Response(
+                status_code=HTTP_403_FORBIDDEN,
+                content=json.dumps(
+                    self.global_exception_error_message(
+                        status_code=HTTP_403_FORBIDDEN,
+                        exc=exc,
+                        request=request,
+                    ).__dict__
+                )
+            )
+
         @self.app.exception_handler(InternalServerError)
         async def internal_server_error_exception_handler(
                 request: Request,
@@ -64,7 +100,7 @@ class HttpExceptionsHandler:
     ) -> ExceptionResponseDto:
         return ExceptionResponseDto(
             status_code=status_code,
-            exc=[DetailResponseDto(element).__dict__ for element in [exc]],
+            exc=[DictionaryUtils.remove_none_values(DetailResponseDto(element).__dict__) for element in [exc]],
             timestamp=str(datetime.now().astimezone()),
             path=request.url.path,
             method=request.method,

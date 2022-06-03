@@ -141,12 +141,13 @@ class BaseRepository:
         raise InternalServerError('Could not find any column with "delete_column" metadata')
 
     async def update(
-            self, db: Session, criteria: Union[str, int, FindOneOptions], partial_entity: BaseModel
+            self, db: Session, criteria: Union[str, int, FindOneOptions], partial_entity: Union[BaseModel, dict]
     ) -> Optional[UpdateResult]:
         entity = await self.find_one_or_fail(db, criteria)
 
-        partial_entity_data = partial_entity.dict(exclude_unset=True)
-        for key, value in partial_entity_data.items():
+        if isinstance(partial_entity, BaseModel):
+            partial_entity = partial_entity.dict(exclude_unset=True)
+        for key, value in partial_entity.items():
             setattr(entity, key, value)
 
         db.commit()
