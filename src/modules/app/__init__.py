@@ -8,8 +8,8 @@ app_routers = APIRouter()
 
 # Include App Modules Routes
 app_routers.include_router(app_router)
-app_routers.include_router(domain_routers)
 app_routers.include_router(infrastructure_routers)
+app_routers.include_router(domain_routers)
 
 # Include App Entities
 app_entities = infrastructure_entities + domain_entities
