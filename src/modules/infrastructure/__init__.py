@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from .auth import auth_router
 # Infrastructure Modules import
+from .auth import auth_router
 from .user import User, user_router
 
 infrastructure_routers = APIRouter()
