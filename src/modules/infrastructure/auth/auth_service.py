@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from src.core.types.exceptions_type import UnauthorizedException
 from src.core.utils.hash_utils import validate_hash
-from src.modules.infrastructure.user.entities.user_entity import User
+from src.modules.infrastructure.user import User
 from src.modules.infrastructure.user.user_interface import UserInterface
 from .dto.login_payload_dto import LoginPayloadDto
 from .jwt_service import create_access_token

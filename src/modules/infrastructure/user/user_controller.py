@@ -39,7 +39,7 @@ async def get_all_users(database: Session = Depends(get_db)) -> Optional[List[Us
     dependencies=[Depends(Auth(roles=[UserRole.ADMIN]))]
 )
 async def get_user_by_id(id: str, database: Session = Depends(get_db)) -> Optional[UserDto]:
-    return await user_service.get_one_user(id, database)
+    return await user_service.find_one_user(id, database)
 
 
 @user_router.delete(

@@ -9,7 +9,7 @@ from config import TOKEN_ALGORITHM, TOKEN_EXPIRATION_MINUTES, TOKEN_SECRET_KEY
 from src.core.types.exceptions_type import UnauthorizedException
 from src.modules.infrastructure.auth.dto.token_payload_dto import TokenPayloadDto
 from src.modules.infrastructure.database import get_db
-from src.modules.infrastructure.user.entities.user_entity import User
+from src.modules.infrastructure.user import User
 from src.modules.infrastructure.user.user_interface import UserInterface
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
