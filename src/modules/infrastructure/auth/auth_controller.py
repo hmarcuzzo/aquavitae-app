@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from src.core.decorators.http_decorator import Auth
 from src.modules.infrastructure.database import get_db
 from .auth_service import AuthService
+from src.core.decorators.http_decorator import Auth
 from .dto.login_payload_dto import LoginPayloadDto
 from .jwt_service import get_current_user
 from ..user import User
