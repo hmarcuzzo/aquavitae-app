@@ -14,6 +14,7 @@ if config.config_file_name is not None:
 
 import config as config_env
 from src.modules.infrastructure.database.base import Base
+from src.modules.app import app_entities
 
 # add your model's MetaData object here
 # for 'autogenerate' support
