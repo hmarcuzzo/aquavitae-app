@@ -31,5 +31,5 @@ async def login(
 )
 async def get_current_user(
         user: User = Depends(get_current_user)
-) -> Optional[User]:
+) -> Optional[UserDto]:
     return user

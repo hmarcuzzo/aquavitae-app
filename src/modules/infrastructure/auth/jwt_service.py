@@ -28,7 +28,7 @@ def create_access_token(data: dict) -> TokenPayloadDto:
     return TokenPayloadDto(expires_in=expire, access_token=encoded_jwt)
 
 
-async def verify_token(token: str, data: str) -> str:
+def verify_token(token: str, data: str) -> str:
     try:
         payload = jwt.decode(token, TOKEN_SECRET_KEY, algorithms=[TOKEN_ALGORITHM])
         user_data: str = payload.get(data)
@@ -40,10 +40,10 @@ async def verify_token(token: str, data: str) -> str:
 
 
 async def get_current_user(data: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    user_id = await verify_token(data, 'user_id')
+    user_id = verify_token(data, 'user_id')
     return await user_interface.find_one_user(db, find_data={'where': User.id == user_id})
 
 
 async def get_current_user_role(data: str = Depends(oauth2_scheme)) -> UserRole:
-    user_role = await verify_token(data, 'user_role')
+    user_role = verify_token(data, 'user_role')
     return UserRole(user_role)
