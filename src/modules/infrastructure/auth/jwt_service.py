@@ -16,7 +16,7 @@ from src.modules.infrastructure.user.user_interface import UserInterface
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 user_interface = UserInterface()
 
-credentials_exception = UnauthorizedException('Could not validate credentials')
+credentials_exception = UnauthorizedException("Could not validate credentials")
 
 
 def create_access_token(data: dict) -> TokenPayloadDto:
@@ -39,11 +39,15 @@ def verify_token(token: str, data: str) -> str:
         raise credentials_exception
 
 
-async def get_current_user(data: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    user_id = verify_token(data, 'user_id')
-    return await user_interface.find_one_user(db, find_data={'where': User.id == user_id})
+async def get_current_user(
+    data: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> User:
+    user_id = verify_token(data, "user_id")
+    return await user_interface.find_one_user(
+        db, find_data={"where": User.id == user_id}
+    )
 
 
 async def get_current_user_role(data: str = Depends(oauth2_scheme)) -> UserRole:
-    user_role = verify_token(data, 'user_role')
+    user_role = verify_token(data, "user_role")
     return UserRole(user_role)

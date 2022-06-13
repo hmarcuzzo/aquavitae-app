@@ -31,11 +31,14 @@ pause_listener = PauseListener()
 @event.listens_for(Query, "before_compile", retval=True)
 @pause_listener
 def no_deleted(query: Query) -> Query:
-    columns = [] if not isinstance(query.column_descriptions[0]['entity'], DeclarativeMeta) \
-        else get_columns(query.column_descriptions[0]['entity'])
+    columns = (
+        []
+        if not isinstance(query.column_descriptions[0]["entity"], DeclarativeMeta)
+        else get_columns(query.column_descriptions[0]["entity"])
+    )
 
     for column in columns:
-        if 'delete_column' in column.info and column.info['delete_column']:
+        if "delete_column" in column.info and column.info["delete_column"]:
             if not __should_apply_filter(query, column):
                 return query
 
@@ -54,7 +57,7 @@ def __should_apply_filter(query: Query, column) -> bool:
 
 
 def __get_where_clauses(query: Query) -> list[BinaryExpression]:
-    if hasattr(query.whereclause, 'clauses'):
+    if hasattr(query.whereclause, "clauses"):
         return [clause for clause in query.whereclause.clauses]
     else:
         if query.whereclause is not None:

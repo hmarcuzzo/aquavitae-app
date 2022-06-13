@@ -13,4 +13,6 @@ class Auth:
 
     def __call__(self, user_role: UserRole = Depends(get_current_user_role)):
         if self.roles and user_role not in self.roles:
-            raise ForbiddenException('You do not have permission to access this resource')
+            raise ForbiddenException(
+                "You do not have permission to access this resource"
+            )

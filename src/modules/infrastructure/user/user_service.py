@@ -19,11 +19,13 @@ class UserService:
         self.user_repository = UserRepository()
 
     # ---------------------- PUBLIC METHODS ----------------------
-    async def create_user(self, user_dto: CreateUserDto, db_session: Session) -> Optional[UserDto]:
+    async def create_user(
+        self, user_dto: CreateUserDto, db_session: Session
+    ) -> Optional[UserDto]:
         user = await self.__verify_email_exist(user_dto.email, db_session)
 
         if user:
-            raise BadRequestException(f'Email already in use.', ['User', 'email'])
+            raise BadRequestException(f"Email already in use.", ["User", "email"])
 
         new_user = await self.user_repository.create(db_session, user_dto)
 
@@ -35,23 +37,35 @@ class UserService:
 
         return [UserDto(**user.__dict__) for user in all_users]
 
-    async def find_one_user(self, find_data: Union[FindOneOptions, str], db_session: Session) -> Optional[UserDto]:
+    async def find_one_user(
+        self, find_data: Union[FindOneOptions, str], db_session: Session
+    ) -> Optional[UserDto]:
         user = await self.user_repository.find_one_or_fail(db_session, find_data)
 
         return UserDto(**user.__dict__)
 
-    async def delete_user(self, user_id: str, db_session: Session) -> Optional[UpdateResult]:
+    async def delete_user(
+        self, user_id: str, db_session: Session
+    ) -> Optional[UpdateResult]:
         return await self.user_repository.soft_delete(db_session, user_id)
 
     async def update_user(
-            self, user_id: str, update_user_dto: UpdateUserDto, db_session: Session
+        self, user_id: str, update_user_dto: UpdateUserDto, db_session: Session
     ) -> Optional[UpdateResult]:
         return await self.user_repository.update(db_session, user_id, update_user_dto)
 
     # ---------------------- INTERFACE METHODS ----------------------
-    async def update_last_access(self, user_id: Union[str, UUID], db_session: Session) -> Optional[UpdateResult]:
-        return await self.user_repository.update(db_session, user_id, {'last_access': datetime.now()})
+    async def update_last_access(
+        self, user_id: Union[str, UUID], db_session: Session
+    ) -> Optional[UpdateResult]:
+        return await self.user_repository.update(
+            db_session, user_id, {"last_access": datetime.now()}
+        )
 
     # ---------------------- PRIVATE METHODS ----------------------
-    async def __verify_email_exist(self, email: str, db_session: Session) -> Optional[User]:
-        return await self.user_repository.find_one(db_session, {'where': User.email == email})
+    async def __verify_email_exist(
+        self, email: str, db_session: Session
+    ) -> Optional[User]:
+        return await self.user_repository.find_one(
+            db_session, {"where": User.email == email}
+        )

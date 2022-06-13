@@ -16,7 +16,3 @@ class Pagination(TypedDict):
     take: int
     sort: List[PaginationSort]
     search: List[PaginationSearch]
-
-
-
-

@@ -17,16 +17,17 @@ class Food(BaseEntity):
     sodium: float = Column(Float(2), nullable=False)
 
     def __init__(
-            self,
-            description: str,
-            proteins: int,
-            lipids: int,
-            carbohydrates: int,
-            energy_value: int,
-            potassium: int,
-            phosphorus: int,
-            sodium: int,
-            *args, **kwargs
+        self,
+        description: str,
+        proteins: int,
+        lipids: int,
+        carbohydrates: int,
+        energy_value: int,
+        potassium: int,
+        phosphorus: int,
+        sodium: int,
+        *args,
+        **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.description = description

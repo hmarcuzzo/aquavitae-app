@@ -9,6 +9,4 @@ domain_routers = APIRouter()
 domain_routers.include_router(food_router)
 
 # Include Domain Entities
-domain_entities = [
-    Food
-]
+domain_entities = [Food]
