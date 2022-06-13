@@ -109,7 +109,7 @@ class BaseRepository(Generic[T]):
 
         return result
 
-    async def create(self, db: Session, _entity: Union[type(entity), BaseModel]) -> T:
+    async def create(self, db: Session, _entity: Union[T, BaseModel]) -> T:
         if isinstance(_entity, BaseModel):
             partial_data_entity = _entity.dict(exclude_unset=True)
             _entity = self.entity(**partial_data_entity)
@@ -117,7 +117,7 @@ class BaseRepository(Generic[T]):
         db.add(_entity)
         return _entity
 
-    async def save(self, db: Session, _entity: type(entity)) -> Optional[T]:
+    async def save(self, db: Session, _entity: T) -> Optional[T]:
         db.commit()
         db.refresh(_entity)
         return _entity
