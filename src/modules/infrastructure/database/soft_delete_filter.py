@@ -1,8 +1,9 @@
 import contextlib
+from typing import Any, List, Union
 
-from sqlalchemy import event
+from sqlalchemy import Column, event
 from sqlalchemy.orm import DeclarativeMeta, Query
-from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, BooleanClauseList
 from sqlalchemy_utils import get_columns
 
 
@@ -48,18 +49,31 @@ def no_deleted(query: Query) -> Query:
     return query
 
 
-def __should_apply_filter(query: Query, column) -> bool:
-    for clause in __get_where_clauses(query):
-        if clause.left.description is column.description:
+def __should_apply_filter(query: Query, column: Column) -> bool:
+    for clause in __get_where_clauses(query.whereclause):
+        if clause.description is column.description:
             return False
 
     return True
 
 
-def __get_where_clauses(query: Query) -> list[BinaryExpression]:
-    if hasattr(query.whereclause, "clauses"):
-        return [clause for clause in query.whereclause.clauses]
-    else:
-        if query.whereclause is not None:
-            return [query.whereclause]
-        return []
+def __get_where_clauses(
+    whereclause: Union[BooleanClauseList, BinaryExpression, List[Any]]
+) -> List[Column]:
+    clauses = []
+
+    if whereclause is not None:
+        if not (
+            isinstance(whereclause, BooleanClauseList) or isinstance(whereclause, List)
+        ):
+            whereclause = [whereclause]
+
+        for clause in whereclause:
+            if hasattr(clause, "left"):
+                clauses += __get_where_clauses([clause.left])
+            elif hasattr(clause, "clause"):
+                clauses += __get_where_clauses([clause.clause])
+            else:
+                clauses.append(clause)
+
+    return clauses
