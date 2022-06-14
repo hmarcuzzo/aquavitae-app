@@ -29,7 +29,7 @@ food_service = FoodService()
     "/create",
     status_code=status.HTTP_201_CREATED,
     response_model=FoodDto,
-    dependencies=[Depends(Auth([UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
 async def create_food(
     request: CreateFoodDto, database: Session = Depends(get_db)
@@ -40,7 +40,7 @@ async def create_food(
 @food_router.get(
     "/get",
     response_model=PaginationResponseDto[FoodDto],
-    dependencies=[Depends(Auth([UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
 async def get_all_food_paginated(
     pagination: FindManyOptions = Depends(
@@ -52,7 +52,9 @@ async def get_all_food_paginated(
 
 
 @food_router.get(
-    "/get/{id}", response_model=FoodDto, dependencies=[Depends(Auth([UserRole.ADMIN]))]
+    "/get/{id}",
+    response_model=FoodDto,
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
 async def get_food_by_id(
     id: str, database: Session = Depends(get_db)
@@ -63,7 +65,7 @@ async def get_food_by_id(
 @food_router.delete(
     "/delete/{id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
 async def delete_food(
     id: str, database: Session = Depends(get_db)
@@ -74,7 +76,7 @@ async def delete_food(
 @food_router.patch(
     "/update/{id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
 async def update_food(
     request: UpdateFoodDto, id: str, database: Session = Depends(get_db)
