@@ -11,6 +11,4 @@ infrastructure_routers.include_router(auth_router)
 infrastructure_routers.include_router(user_router)
 
 # Include Infrastructure Entities
-infrastructure_entities = [
-    User
-]
+infrastructure_entities = [User]

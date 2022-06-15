@@ -16,10 +16,18 @@ class User(BaseEntity):
     last_access: DateTime = Column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
-        UniqueConstraint('email', 'deleted_at', name='unique_user_email_active'),
+        UniqueConstraint("email", "deleted_at", name="unique_user_email_active"),
     )
 
-    def __init__(self, name: str, email: str, password: str, role: UserRole = UserRole.USER, *args, **kwargs):
+    def __init__(
+        self,
+        name: str,
+        email: str,
+        password: str,
+        role: UserRole = UserRole.USER,
+        *args,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.name = name
         self.email = email
@@ -30,8 +38,8 @@ class User(BaseEntity):
         return validate_hash(password, self.password)
 
 
-@event.listens_for(User, 'before_insert')
-@event.listens_for(User, 'before_update')
+@event.listens_for(User, "before_insert")
+@event.listens_for(User, "before_update")
 def before_insert(mapper, connection, target: User) -> None:
     state = inspect(target)
 
