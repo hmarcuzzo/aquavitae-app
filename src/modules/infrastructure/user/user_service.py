@@ -55,6 +55,13 @@ class UserService:
         return await self.user_repository.update(db_session, user_id, update_user_dto)
 
     # ---------------------- INTERFACE METHODS ----------------------
+    async def get_one_user(
+        self, find_data: Union[FindOneOptions, str], db_session: Session
+    ) -> Optional[UserDto]:
+        user = await self.user_repository.find_one_or_fail(db_session, find_data)
+
+        return user
+
     async def update_last_access(
         self, user_id: Union[str, UUID], db_session: Session
     ) -> Optional[UpdateResult]:
