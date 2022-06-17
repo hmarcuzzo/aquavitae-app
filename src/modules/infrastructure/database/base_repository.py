@@ -101,12 +101,9 @@ class BaseRepository(Generic[T]):
             criteria = self.__generate_find_one_options_dict(criteria)
         query = self.__apply_options(query, criteria)
 
-        try:
-            with pause_listener.pause(self.with_deleted):
-                self.with_deleted = False
-                return query.first()
-        except Exception:
-            return None
+        with pause_listener.pause(self.with_deleted):
+            self.with_deleted = False
+            return query.first()
 
     async def find_one_or_fail(
         self, db: Session, criteria: Union[str, int, FindOneOptions]
