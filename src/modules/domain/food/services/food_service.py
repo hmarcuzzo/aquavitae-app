@@ -8,11 +8,10 @@ from src.core.common.dto.pagination_response_dto import (
 )
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.update_result_type import UpdateResult
-from src.modules.domain.food.dto.create_food_dto import CreateFoodDto
-from src.modules.domain.food.dto.food_dto import FoodDto
-from src.modules.domain.food.dto.update_food_dto import UpdateFoodDto
-from src.modules.domain.food.entities.food_entity import Food
-from src.modules.domain.food.food_repository import FoodRepository
+from src.modules.domain.food.dto.food.create_food_dto import CreateFoodDto
+from src.modules.domain.food.dto.food.food_dto import FoodDto
+from src.modules.domain.food.dto.food.update_food_dto import UpdateFoodDto
+from src.modules.domain.food.repositories.food_repository import FoodRepository
 
 
 class FoodService:
@@ -20,7 +19,7 @@ class FoodService:
         self.food_repository = FoodRepository()
 
     # ---------------------- PUBLIC METHODS ----------------------
-    async def create_food(self, food_dto: CreateFoodDto, db: Session) -> Optional[Food]:
+    async def create_food(self, food_dto: CreateFoodDto, db: Session) -> Optional[FoodDto]:
         new_food = await self.food_repository.create(db, food_dto)
 
         new_food = await self.food_repository.save(db, new_food)

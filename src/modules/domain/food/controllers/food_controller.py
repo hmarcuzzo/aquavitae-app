@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -9,15 +10,15 @@ from src.core.decorators.http_decorator import Auth
 from src.core.decorators.pagination_decorator import GetPagination
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.update_result_type import UpdateResult
-from src.modules.domain.food.dto.create_food_dto import CreateFoodDto
-from src.modules.domain.food.dto.food_dto import FoodDto
-from src.modules.domain.food.dto.food_query_dto import (
+from src.modules.domain.food.dto.food.create_food_dto import CreateFoodDto
+from src.modules.domain.food.dto.food.food_dto import FoodDto
+from src.modules.domain.food.dto.food.food_query_dto import (
     FindAllFoodQueryDto,
     OrderByFoodQueryDto,
 )
-from src.modules.domain.food.dto.update_food_dto import UpdateFoodDto
+from src.modules.domain.food.dto.food.update_food_dto import UpdateFoodDto
 from src.modules.domain.food.entities.food_entity import Food
-from src.modules.domain.food.food_service import FoodService
+from src.modules.domain.food.services.food_service import FoodService
 from src.modules.infrastructure.database import get_db
 
 food_router = APIRouter(tags=["Food"], prefix="/food")
@@ -57,9 +58,9 @@ async def get_all_food_paginated(
     dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
 async def get_food_by_id(
-    id: str, database: Session = Depends(get_db)
+    id: UUID, database: Session = Depends(get_db)
 ) -> Optional[FoodDto]:
-    return await food_service.find_one_food(id, database)
+    return await food_service.find_one_food(str(id), database)
 
 
 @food_router.delete(
@@ -68,9 +69,9 @@ async def get_food_by_id(
     dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
 async def delete_food(
-    id: str, database: Session = Depends(get_db)
+    id: UUID, database: Session = Depends(get_db)
 ) -> Optional[UpdateResult]:
-    return await food_service.delete_food(id, database)
+    return await food_service.delete_food(str(id), database)
 
 
 @food_router.patch(
@@ -79,6 +80,6 @@ async def delete_food(
     dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
 async def update_food(
-    request: UpdateFoodDto, id: str, database: Session = Depends(get_db)
+    request: UpdateFoodDto, id: UUID, database: Session = Depends(get_db)
 ) -> Optional[UpdateResult]:
-    return await food_service.update_food(id, request, database)
+    return await food_service.update_food(str(id), request, database)
