@@ -44,8 +44,8 @@ class BaseRepository(Generic[T]):
                 query = query.limit(options_dict["take"])
             elif key == "relations":
                 query = query.options(
-                    lazyload(*options_dict["relations"])
-                )  # TODO: Not tested yet
+                    subqueryload(getattr(self.entity, *options_dict["relations"]))
+                )
             elif key == "with_deleted":
                 self.with_deleted = options_dict["with_deleted"]
             else:
