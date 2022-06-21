@@ -76,6 +76,8 @@ SQLAlchemy-Utils = "==0.38.2"
 packaging = "==21.0"
 auto-changelog = "*"
 python-dotenv = "*"
+black = "*"
+pycodestyle = "*"
 
 [dev-packages]
 

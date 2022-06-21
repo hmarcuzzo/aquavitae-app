@@ -16,23 +16,36 @@ class AuthService:
         self.user_interface = UserInterface()
 
     # ---------------------- PUBLIC METHODS ----------------------
-    async def login_user(self, user_login_dto: OAuth2PasswordRequestForm, db: Session) -> Optional[LoginPayloadDto]:
+    async def login_user(
+        self, user_login_dto: OAuth2PasswordRequestForm, db: Session
+    ) -> Optional[LoginPayloadDto]:
         user = await self.__validate_user(db, user_login_dto)
-        access_token = create_access_token({
-            'user_id': str(user.id),
-            'user_email': user.email,
-            'user_role': user.role.value,
-        })
+        access_token = create_access_token(
+            {
+                "user_id": str(user.id),
+                "user_email": user.email,
+                "user_role": user.role.value,
+            }
+        )
 
         await self.user_interface.update_last_access(db, str(user.id))
 
-        return LoginPayloadDto(user=user, token=access_token)
+        return LoginPayloadDto(
+            user=user,
+            expires_in=access_token.expires_in,
+            access_token=access_token.access_token,
+            token_type=access_token.token_type,
+        )
 
     # ---------------------- PRIVATE METHODS ----------------------
-    async def __validate_user(self, db: Session, userLoginDto: OAuth2PasswordRequestForm) -> Optional[User]:
-        user = await self.user_interface.find_one_user(db, {'where': User.email == userLoginDto.username})
+    async def __validate_user(
+        self, db: Session, userLoginDto: OAuth2PasswordRequestForm
+    ) -> Optional[User]:
+        user = await self.user_interface.find_one_user(
+            db, {"where": User.email == userLoginDto.username}
+        )
 
         if user and validate_hash(userLoginDto.password, user.password):
             return user
 
-        raise UnauthorizedException(f'Invalid credentials.', ['User', 'password'])
+        raise UnauthorizedException(f"Invalid credentials.", ["User", "password"])

@@ -1,10 +1,8 @@
-from typing import Union
-
-from src.core.types.exceptions_type import BadRequestException, InternalServerError, NotFoundException
+from src.core.common.base_exception_type import BaseExceptionType
 
 
 class DetailResponseDto:
-    def __init__(self, exc: Union[BadRequestException, NotFoundException, InternalServerError]):
+    def __init__(self, exc: BaseExceptionType):
         self.loc = exc.loc
         self.msg = exc.msg
         self.type = exc.type
