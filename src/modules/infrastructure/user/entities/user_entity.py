@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from sqlalchemy import Column, DateTime, Enum, event, inspect, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, Enum, event, String, UniqueConstraint
+from sqlalchemy_utils import has_changes
 
 from src.core.constants.enum.user_role import UserRole
 from src.core.utils.hash_utils import generate_hash, validate_hash
@@ -41,7 +42,5 @@ class User(BaseEntity):
 @event.listens_for(User, "before_insert")
 @event.listens_for(User, "before_update")
 def before_insert(mapper, connection, target: User) -> None:
-    state = inspect(target)
-
-    if state.attrs.password.history.has_changes():
+    if has_changes(target, "password"):
         target.password = generate_hash(target.password)

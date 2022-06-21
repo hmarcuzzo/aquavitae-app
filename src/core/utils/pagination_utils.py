@@ -1,7 +1,7 @@
 from typing import List, TypeVar, Union
 
-from sqlalchemy import cast, String, or_
-from sqlalchemy_utils import get_columns
+from sqlalchemy import or_, String
+from sqlalchemy_utils import cast_if, get_columns
 
 from src.core.types.exceptions_type import BadRequestException
 from src.core.types.find_many_options_type import FindManyOptions
@@ -85,7 +85,7 @@ class PaginationUtils:
             for search_param in paging_params["search"]:
                 search_obj = getattr(entity, search_param["field"])
                 paging_data["where"].append(
-                    cast(search_obj, String).ilike(f'%{search_param["value"]}%')
+                    cast_if(search_obj, String).ilike(f'%{search_param["value"]}%')
                 )
 
         if search_all:
@@ -97,7 +97,7 @@ class PaginationUtils:
             where_clauses = []
             for column in where_columns:
                 where_clauses.append(
-                    cast(getattr(entity, column), String).ilike(f"%{search_all}%")
+                    cast_if(getattr(entity, column), String).ilike(f"%{search_all}%")
                 )
             paging_data["where"].append(or_(*where_clauses))
 

@@ -8,13 +8,13 @@ from src.modules.infrastructure.database.base_entity import BaseEntity
 @dataclass
 class Food(BaseEntity):
     description: String = Column(String(255), nullable=False)
-    proteins: Float = Column(Float(2), nullable=False)
-    lipids: Float = Column(Float(2), nullable=False)
-    carbohydrates: Float = Column(Float(2), nullable=False)
-    energy_value: Float = Column(Float(2), nullable=False)
-    potassium: Float = Column(Float(2), nullable=False)
-    phosphorus: Float = Column(Float(2), nullable=False)
-    sodium: Float = Column(Float(2), nullable=False)
+    proteins: Float(2) = Column(Float(2), nullable=False)
+    lipids: Float(2) = Column(Float(2), nullable=False)
+    carbohydrates: Float(2) = Column(Float(2), nullable=False)
+    energy_value: Float(2) = Column(Float(2), nullable=False)
+    potassium: Float(2) = Column(Float(2), nullable=False)
+    phosphorus: Float(2) = Column(Float(2), nullable=False)
+    sodium: Float(2) = Column(Float(2), nullable=False)
 
     def __init__(
         self,

@@ -3,7 +3,7 @@ from typing import Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import lazyload, Query, Session
+from sqlalchemy.orm import Query, Session, subqueryload
 from sqlalchemy_utils import get_columns
 
 from src.core.types.delete_result_type import DeleteResult
