@@ -1,6 +1,7 @@
 from typing import Optional
+from uuid import UUID
 
-from pydantic import BaseModel, condecimal, constr, Extra
+from pydantic import BaseModel, condecimal, constr, Extra, Field
 
 
 class UpdateFoodDto(BaseModel):
@@ -12,6 +13,7 @@ class UpdateFoodDto(BaseModel):
     potassium: Optional[condecimal(decimal_places=2)]
     phosphorus: Optional[condecimal(decimal_places=2)]
     sodium: Optional[condecimal(decimal_places=2)]
+    food_category_id: Optional[UUID] = Field(alias="food_category")
 
     class Config:
         extra = Extra.forbid

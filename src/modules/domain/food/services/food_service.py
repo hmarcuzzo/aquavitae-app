@@ -11,6 +11,7 @@ from src.core.types.update_result_type import UpdateResult
 from src.modules.domain.food.dto.food.create_food_dto import CreateFoodDto
 from src.modules.domain.food.dto.food.food_dto import FoodDto
 from src.modules.domain.food.dto.food.update_food_dto import UpdateFoodDto
+from src.modules.domain.food.entities.food_entity import Food
 from src.modules.domain.food.repositories.food_repository import FoodRepository
 
 
@@ -19,7 +20,9 @@ class FoodService:
         self.food_repository = FoodRepository()
 
     # ---------------------- PUBLIC METHODS ----------------------
-    async def create_food(self, food_dto: CreateFoodDto, db: Session) -> Optional[FoodDto]:
+    async def create_food(
+        self, food_dto: CreateFoodDto, db: Session
+    ) -> Optional[FoodDto]:
         new_food = await self.food_repository.create(db, food_dto)
 
         new_food = await self.food_repository.save(db, new_food)
@@ -28,6 +31,7 @@ class FoodService:
     async def get_all_food_paginated(
         self, pagination: FindManyOptions, db: Session
     ) -> Optional[PaginationResponseDto[FoodDto]]:
+        pagination["relations"] = ["food_category"]
         [all_food, total] = await self.food_repository.find_and_count(db, pagination)
 
         return create_pagination_response_dto(
@@ -38,7 +42,9 @@ class FoodService:
         )
 
     async def find_one_food(self, food_id: str, db: Session) -> Optional[FoodDto]:
-        food = await self.food_repository.find_one_or_fail(db, food_id)
+        food = await self.food_repository.find_one_or_fail(
+            db, {"where": Food.id == food_id, "relations": ["food_category"]}
+        )
 
         return FoodDto(**food.__dict__)
 

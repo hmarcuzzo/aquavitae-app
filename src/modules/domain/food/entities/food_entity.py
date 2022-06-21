@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
-from sqlalchemy import Column, String, Float
+from sqlalchemy import Column, Float, ForeignKey, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from src.modules.infrastructure.database.base_entity import BaseEntity
 
@@ -15,6 +17,11 @@ class Food(BaseEntity):
     potassium: Float(2) = Column(Float(2), nullable=False)
     phosphorus: Float(2) = Column(Float(2), nullable=False)
     sodium: Float(2) = Column(Float(2), nullable=False)
+
+    food_category_id: UUID = Column(
+        UUID(as_uuid=True), ForeignKey("food_category.id"), nullable=False
+    )
+    food_category = relationship("FoodCategory")
 
     def __init__(
         self,

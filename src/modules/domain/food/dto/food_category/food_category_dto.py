@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Union
 from uuid import UUID
 
-from pydantic import conint, constr, Field
+from pydantic import conint, constr
 
 from src.core.common.dto.base_dto import BaseDto
 
@@ -11,7 +11,7 @@ from src.core.common.dto.base_dto import BaseDto
 class FoodCategoryDto(BaseDto):
     description: constr(max_length=255)
     level: conint()
-    food_category: Union[FoodCategoryDto, UUID] = Field(default=None)
+    food_category: Union[FoodCategoryDto, UUID] = None
 
     def __init__(self, **kwargs):
         if "food_category" not in kwargs:
