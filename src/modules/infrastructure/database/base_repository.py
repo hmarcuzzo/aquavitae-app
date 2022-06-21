@@ -3,7 +3,7 @@ from typing import Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import lazyload, Query, Session
+from sqlalchemy.orm import Query, Session, subqueryload
 from sqlalchemy_utils import get_columns
 
 from src.core.types.delete_result_type import DeleteResult
@@ -44,8 +44,8 @@ class BaseRepository(Generic[T]):
                 query = query.limit(options_dict["take"])
             elif key == "relations":
                 query = query.options(
-                    lazyload(*options_dict["relations"])
-                )  # TODO: Not tested yet
+                    subqueryload(getattr(self.entity, *options_dict["relations"]))
+                )
             elif key == "with_deleted":
                 self.with_deleted = options_dict["with_deleted"]
             else:
@@ -101,12 +101,9 @@ class BaseRepository(Generic[T]):
             criteria = self.__generate_find_one_options_dict(criteria)
         query = self.__apply_options(query, criteria)
 
-        try:
-            with pause_listener.pause(self.with_deleted):
-                self.with_deleted = False
-                return query.first()
-        except Exception:
-            return None
+        with pause_listener.pause(self.with_deleted):
+            self.with_deleted = False
+            return query.first()
 
     async def find_one_or_fail(
         self, db: Session, criteria: Union[str, int, FindOneOptions]

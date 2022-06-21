@@ -1,5 +1,5 @@
 from src.modules.infrastructure.database.base_repository import BaseRepository
-from .entities.food_entity import Food
+from src.modules.domain.food.entities.food_entity import Food
 
 
 class FoodRepository(BaseRepository[Food]):

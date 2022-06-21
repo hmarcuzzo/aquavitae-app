@@ -1,31 +1,38 @@
 from dataclasses import dataclass
 
-from sqlalchemy import Column, String, Float
+from sqlalchemy import Column, Float, ForeignKey, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from src.modules.infrastructure.database.base_entity import BaseEntity
 
 
 @dataclass
 class Food(BaseEntity):
-    description: str = Column(String(255), nullable=False)
-    proteins: float = Column(Float(2), nullable=False)
-    lipids: float = Column(Float(2), nullable=False)
-    carbohydrates: float = Column(Float(2), nullable=False)
-    energy_value: float = Column(Float(2), nullable=False)
-    potassium: float = Column(Float(2), nullable=False)
-    phosphorus: float = Column(Float(2), nullable=False)
-    sodium: float = Column(Float(2), nullable=False)
+    description: String = Column(String(255), nullable=False)
+    proteins: Float(2) = Column(Float(2), nullable=False)
+    lipids: Float(2) = Column(Float(2), nullable=False)
+    carbohydrates: Float(2) = Column(Float(2), nullable=False)
+    energy_value: Float(2) = Column(Float(2), nullable=False)
+    potassium: Float(2) = Column(Float(2), nullable=False)
+    phosphorus: Float(2) = Column(Float(2), nullable=False)
+    sodium: Float(2) = Column(Float(2), nullable=False)
+
+    food_category_id: UUID = Column(
+        UUID(as_uuid=True), ForeignKey("food_category.id"), nullable=False
+    )
+    food_category = relationship("FoodCategory")
 
     def __init__(
         self,
-        description: str,
-        proteins: int,
-        lipids: int,
-        carbohydrates: int,
-        energy_value: int,
-        potassium: int,
-        phosphorus: int,
-        sodium: int,
+        description: String(255),
+        proteins: Float(2),
+        lipids: Float(2),
+        carbohydrates: Float(2),
+        energy_value: Float(2),
+        potassium: Float(2),
+        phosphorus: Float(2),
+        sodium: Float(2),
         *args,
         **kwargs
     ):

@@ -9,4 +9,4 @@ class LoginPayloadDto(BaseModel):
     user: UserDto
     expires_in: datetime
     access_token: str
-    token_type: str
+    token_type: str = "Bearer"

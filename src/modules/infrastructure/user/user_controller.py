@@ -1,4 +1,5 @@
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -39,9 +40,9 @@ async def get_all_users(database: Session = Depends(get_db)) -> Optional[List[Us
     "/get/{id}", response_model=UserDto, dependencies=[Depends(Auth([UserRole.ADMIN]))]
 )
 async def get_user_by_id(
-    id: str, database: Session = Depends(get_db)
+    id: UUID, database: Session = Depends(get_db)
 ) -> Optional[UserDto]:
-    return await user_service.find_one_user(id, database)
+    return await user_service.find_one_user(str(id), database)
 
 
 @user_router.delete(

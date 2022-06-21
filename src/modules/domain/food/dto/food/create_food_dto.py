@@ -1,4 +1,6 @@
-from pydantic import BaseModel, constr, Extra, condecimal
+from uuid import UUID
+
+from pydantic import BaseModel, constr, Extra, condecimal, Field
 
 
 class CreateFoodDto(BaseModel):
@@ -10,6 +12,7 @@ class CreateFoodDto(BaseModel):
     potassium: condecimal(decimal_places=2)
     phosphorus: condecimal(decimal_places=2)
     sodium: condecimal(decimal_places=2)
+    food_category_id: UUID = Field(alias="food_category")
 
     class Config:
         extra = Extra.forbid
