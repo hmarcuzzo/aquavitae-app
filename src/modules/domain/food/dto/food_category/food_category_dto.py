@@ -14,8 +14,18 @@ class FoodCategoryDto(BaseDto):
     food_category: Union[FoodCategoryDto, UUID] = None
 
     def __init__(self, **kwargs):
+        if (
+            "food_category" in kwargs
+            and kwargs["food_category"]
+            and type(kwargs["food_category"]) == FoodCategoryDto
+            and not hasattr(kwargs["food_category"], "deleted_at")
+            and kwargs["food_category"]["deleted_at"]
+        ):
+            kwargs["food_category"] = None
+
         if "food_category" not in kwargs:
             kwargs["food_category"] = kwargs["food_category_id"]
+
         super().__init__(**kwargs)
 
     class Config:
