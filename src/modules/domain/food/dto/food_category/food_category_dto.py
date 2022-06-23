@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union
+from typing import Dict, Union
 from uuid import UUID
 
 from pydantic import conint, constr
@@ -17,7 +17,7 @@ class FoodCategoryDto(BaseDto):
         if (
             "food_category" in kwargs
             and kwargs["food_category"]
-            and type(kwargs["food_category"]) == FoodCategoryDto
+            and isinstance(kwargs["food_category"], Dict)
             and not hasattr(kwargs["food_category"], "deleted_at")
             and kwargs["food_category"]["deleted_at"]
         ):
