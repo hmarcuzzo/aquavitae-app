@@ -1,10 +1,10 @@
 import contextlib
-from typing import Any, List, Union
 
-from sqlalchemy import Column, event
+from sqlalchemy import event
 from sqlalchemy.orm import DeclarativeMeta, Query
-from sqlalchemy.sql.elements import BinaryExpression, BooleanClauseList
 from sqlalchemy_utils import get_columns
+
+from src.core.utils.database_utils import DatabaseUtils
 
 
 class PauseListener:
@@ -38,42 +38,11 @@ def no_deleted(query: Query) -> Query:
         else get_columns(query.column_descriptions[0]["entity"])
     )
 
-    for column in columns:
-        if "delete_column" in column.info and column.info["delete_column"]:
-            if not __should_apply_filter(query, column):
-                return query
+    column = DatabaseUtils.get_column_represent_deleted(columns)
+    if column is not None:
+        if not DatabaseUtils.should_apply_filter(query, column):
+            return query
 
-            query = query.enable_assertions(False).where(column == None)
-            break
+        query = query.enable_assertions(False).where(column == None)
 
     return query
-
-
-def __should_apply_filter(query: Query, column: Column) -> bool:
-    for clause in __get_where_clauses(query.whereclause):
-        if clause.description is column.description:
-            return False
-
-    return True
-
-
-def __get_where_clauses(
-    whereclause: Union[BooleanClauseList, BinaryExpression, List[Any]]
-) -> List[Column]:
-    clauses = []
-
-    if whereclause is not None:
-        if not (
-            isinstance(whereclause, BooleanClauseList) or isinstance(whereclause, List)
-        ):
-            whereclause = [whereclause]
-
-        for clause in whereclause:
-            if hasattr(clause, "left"):
-                clauses += __get_where_clauses([clause.left])
-            elif hasattr(clause, "clause"):
-                clauses += __get_where_clauses([clause.clause])
-            else:
-                clauses.append(clause)
-
-    return clauses
