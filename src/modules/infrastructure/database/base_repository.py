@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel
 from sqlalchemy.inspection import inspect
@@ -11,6 +11,7 @@ from src.core.types.exceptions_type import InternalServerError, NotFoundExceptio
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
+from src.core.utils.database_utils import DatabaseUtils
 from .base import Base
 from .soft_delete_filter import pause_listener
 
@@ -67,18 +68,41 @@ class BaseRepository(Generic[T]):
     def __generate_find_one_options_dict(self, criteria: Union[str, int]) -> FindOneOptions:
         return {"where": [inspect(self.entity).primary_key[0] == criteria]}
 
-    async def __is_relations_valid(
-        self, db: Session, partial_entity: Union[BaseModel, dict]
-    ) -> bool:
+    def __get_repository_from_foreign_keys(
+        self, entity_data: Union[BaseModel, dict]
+    ) -> List[Tuple["BaseRepository", str, Any]]:
         columns = get_columns(self.entity)
-        for key, value in partial_entity.items():
+
+        for key, value in entity_data.items():
             if key in columns and columns[key].foreign_keys:
                 referred_table = next(iter(columns[key].foreign_keys)).constraint.referred_table
 
                 referred_repository = BaseRepository(get_class_by_table(Base, referred_table))
-                await referred_repository.find_one_or_fail(db, str(value))
+                yield referred_repository, key, value
+
+    async def __is_relations_valid(
+        self, db: Session, partial_entity: Union[BaseModel, dict]
+    ) -> bool:
+        for referred_repository, key, value in self.__get_repository_from_foreign_keys(
+            partial_entity
+        ):
+            await referred_repository.find_one_or_fail(db, str(value))
 
         return True
+
+    async def __remove_deleted_relations(
+        self, db: Session, result: T, options_dict: FindManyOptions = None
+    ) -> T:
+        if not options_dict or "relations" not in options_dict:
+            for referred_repository, key, value in self.__get_repository_from_foreign_keys(
+                result.__dict__
+            ):
+                _entity = await referred_repository.find_one(db, str(value))
+
+                if _entity is None:
+                    setattr(result, key, None)
+
+        return result
 
     # ----------- PUBLIC METHODS -----------
     async def find(self, db: Session, options_dict: FindManyOptions = None) -> Optional[List[T]]:
@@ -86,8 +110,16 @@ class BaseRepository(Generic[T]):
 
         query = self.__apply_options(query, options_dict)
         with pause_listener.pause(self.with_deleted):
+            result = query.all()
+
+            if result and not self.with_deleted:
+                result = [
+                    await self.__remove_deleted_relations(db, element, options_dict)
+                    for element in result
+                ]
+
             self.with_deleted = False
-            return query.all()
+            return result
 
     async def find_and_count(
         self, db: Session, options_dict: FindManyOptions = None
@@ -96,9 +128,14 @@ class BaseRepository(Generic[T]):
 
         query = self.__apply_options(query, options_dict)
         with pause_listener.pause(self.with_deleted):
-            self.with_deleted = False
             count = query.offset(None).limit(None).count()
-            return query.all(), count
+            result = query.all()
+
+            if result and not self.with_deleted:
+                result = [await self.__remove_deleted_relations(db, element) for element in result]
+
+            self.with_deleted = False
+            return result, count
 
     async def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[T]:
         query = db.query(self.entity)
@@ -108,8 +145,13 @@ class BaseRepository(Generic[T]):
         query = self.__apply_options(query, criteria)
 
         with pause_listener.pause(self.with_deleted):
+            result = query.first()
+
+            if result and not self.with_deleted:
+                result = await self.__remove_deleted_relations(db, result)
+
             self.with_deleted = False
-            return query.first()
+            return result
 
     async def find_one_or_fail(
         self, db: Session, criteria: Union[str, int, FindOneOptions]
@@ -155,11 +197,11 @@ class BaseRepository(Generic[T]):
         entity = await self.find_one_or_fail(db, criteria)
         columns = get_columns(self.entity)
 
-        for column in columns:
-            if "delete_column" in column.info:
-                setattr(entity, column.name, datetime.now())
-                db.commit()
-                return UpdateResult(raw=[], affected=1, generatedMaps=[])
+        column = DatabaseUtils.get_column_represent_deleted(columns)
+        if column is not None:
+            setattr(entity, column.name, datetime.now())
+            db.commit()
+            return UpdateResult(raw=[], affected=1, generatedMaps=[])
 
         raise InternalServerError('Could not find any column with "delete_column" metadata')
 
