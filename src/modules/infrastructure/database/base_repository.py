@@ -1,3 +1,4 @@
+from copy import copy
 from datetime import datetime
 from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
@@ -93,14 +94,33 @@ class BaseRepository(Generic[T]):
     async def __remove_deleted_relations(
         self, db: Session, result: T, options_dict: FindManyOptions = None
     ) -> T:
-        if not options_dict or "relations" not in options_dict:
-            for referred_repository, key, value in self.__get_repository_from_foreign_keys(
-                result.__dict__
+        result_class = inspect(result).class_
+        result_relationships = inspect(result_class).relationships
+        for key, relation_property in result_relationships.items():
+            if (
+                not options_dict
+                or "relations" not in options_dict
+                or key not in options_dict["relations"]
             ):
-                _entity = await referred_repository.find_one(db, str(value))
+                for referred_repository, f_key, value in self.__get_repository_from_foreign_keys(
+                    result.__dict__
+                ):
+                    if value:
+                        _entity = await referred_repository.find_one(db, str(value))
 
-                if _entity is None:
-                    setattr(result, key, None)
+                        if _entity is None:
+                            setattr(result, f_key, None)
+
+            else:
+                if getattr(result, key):
+                    column = DatabaseUtils.get_column_represent_deleted(get_columns(result_class))
+                    if getattr(getattr(result, key), column.description):
+                        setattr(result, key, None)
+                    else:
+                        new_result_key = await self.__remove_deleted_relations(
+                            db, getattr(result, key), options_dict
+                        )
+                        setattr(result, key, new_result_key)
 
         return result
 
@@ -112,7 +132,13 @@ class BaseRepository(Generic[T]):
         with pause_listener.pause(self.with_deleted):
             result = query.all()
 
-            if result and not self.with_deleted:
+            if (
+                result
+                and not self.with_deleted
+                and DatabaseUtils.should_apply_filter(
+                    query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
+                )
+            ):
                 result = [
                     await self.__remove_deleted_relations(db, element, options_dict)
                     for element in result
@@ -131,8 +157,17 @@ class BaseRepository(Generic[T]):
             count = query.offset(None).limit(None).count()
             result = query.all()
 
-            if result and not self.with_deleted:
-                result = [await self.__remove_deleted_relations(db, element) for element in result]
+            if (
+                result
+                and not self.with_deleted
+                and DatabaseUtils.should_apply_filter(
+                    query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
+                )
+            ):
+                result = [
+                    await self.__remove_deleted_relations(db, element, options_dict)
+                    for element in result
+                ]
 
             self.with_deleted = False
             return result, count
@@ -147,8 +182,14 @@ class BaseRepository(Generic[T]):
         with pause_listener.pause(self.with_deleted):
             result = query.first()
 
-            if result and not self.with_deleted:
-                result = await self.__remove_deleted_relations(db, result)
+            if (
+                result
+                and not self.with_deleted
+                and DatabaseUtils.should_apply_filter(
+                    query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
+                )
+            ):
+                result = await self.__remove_deleted_relations(db, result, criteria)
 
             self.with_deleted = False
             return result
