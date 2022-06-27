@@ -9,6 +9,8 @@ APP_ENV = os.getenv("APP_ENV")
 APP_TZ = os.getenv("APP_TZ")
 APP_PORT = int(os.getenv("APP_PORT"))
 
+CORS_ORIGINS = os.getenv("CORS_ORIGINS").split(",")
+
 # --------------- DEFAULT DATABASE CONNECTION --------------- #
 DATABASE_CONNECTION = os.getenv("DATABASE_CONNECTION")
 DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
