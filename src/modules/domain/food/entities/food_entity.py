@@ -19,9 +19,9 @@ class Food(BaseEntity):
     sodium: Float(2) = Column(Float(2), nullable=False)
 
     food_category_id: UUID = Column(
-        UUID(as_uuid=True), ForeignKey("food_category.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("food_category.id", ondelete="CASCADE"), nullable=False
     )
-    food_category = relationship("FoodCategory")
+    food_category = relationship("FoodCategory", back_populates="foods")
 
     def __init__(
         self,

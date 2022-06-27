@@ -7,6 +7,7 @@ load_dotenv()
 # --------------- DEFAULT APP CONFIGURATION --------------- #
 APP_ENV = os.getenv("APP_ENV")
 APP_TZ = os.getenv("APP_TZ")
+APP_PORT = int(os.getenv("APP_PORT"))
 
 # --------------- DEFAULT DATABASE CONNECTION --------------- #
 DATABASE_CONNECTION = os.getenv("DATABASE_CONNECTION")

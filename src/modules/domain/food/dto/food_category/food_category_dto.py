@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union
+from typing import Dict, Union
 from uuid import UUID
 
 from pydantic import conint, constr
@@ -16,6 +16,7 @@ class FoodCategoryDto(BaseDto):
     def __init__(self, **kwargs):
         if "food_category" not in kwargs:
             kwargs["food_category"] = kwargs["food_category_id"]
+
         super().__init__(**kwargs)
 
     class Config:
