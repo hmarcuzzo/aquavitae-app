@@ -13,6 +13,7 @@ from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
 from src.core.utils.database_utils import DatabaseUtils
+from . import get_db
 from .base import Base
 from .soft_delete_filter import pause_listener
 
@@ -87,7 +88,7 @@ class BaseRepository(Generic[T]):
         for referred_repository, key, value in self.__get_repository_from_foreign_keys(
             partial_entity
         ):
-            await referred_repository.find_one_or_fail(db, str(value))
+            await referred_repository.find_one_or_fail(str(value), db)
 
         return True
 
@@ -106,7 +107,7 @@ class BaseRepository(Generic[T]):
                     result.__dict__
                 ):
                     if value:
-                        _entity = await referred_repository.find_one(db, str(value))
+                        _entity = await referred_repository.find_one(str(value), db)
 
                         if _entity is None:
                             setattr(result, f_key, None)
@@ -125,7 +126,9 @@ class BaseRepository(Generic[T]):
         return result
 
     # ----------- PUBLIC METHODS -----------
-    async def find(self, db: Session, options_dict: FindManyOptions = None) -> Optional[List[T]]:
+    async def find(
+        self, options_dict: FindManyOptions = None, db: Session = next(get_db())
+    ) -> Optional[List[T]]:
         query = db.query(self.entity)
 
         query = self.__apply_options(query, options_dict)
@@ -148,7 +151,7 @@ class BaseRepository(Generic[T]):
             return result
 
     async def find_and_count(
-        self, db: Session, options_dict: FindManyOptions = None
+        self, options_dict: FindManyOptions = None, db: Session = next(get_db())
     ) -> Optional[Tuple[List[T], int]]:
         query = db.query(self.entity)
 
@@ -172,7 +175,9 @@ class BaseRepository(Generic[T]):
             self.with_deleted = False
             return result, count
 
-    async def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[T]:
+    async def find_one(
+        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
+    ) -> Optional[T]:
         query = db.query(self.entity)
 
         if isinstance(criteria, (str, int)):
@@ -195,9 +200,9 @@ class BaseRepository(Generic[T]):
             return result
 
     async def find_one_or_fail(
-        self, db: Session, criteria: Union[str, int, FindOneOptions]
+        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[T]:
-        result = await self.find_one(db, criteria)
+        result = await self.find_one(criteria, db)
 
         if not result:
             message = f'Could not find any entity of type "{self.entity.__name__}" that matches the criteria'
@@ -207,7 +212,7 @@ class BaseRepository(Generic[T]):
 
         return result
 
-    async def create(self, db: Session, _entity: Union[T, BaseModel]) -> T:
+    async def create(self, _entity: Union[T, BaseModel], db: Session = next(get_db())) -> T:
         if isinstance(_entity, BaseModel):
             partial_data_entity = _entity.dict(exclude_unset=True)
             _entity = self.entity(**partial_data_entity)
@@ -217,15 +222,15 @@ class BaseRepository(Generic[T]):
         db.add(_entity)
         return _entity
 
-    async def save(self, db: Session, _entity: T) -> Optional[T]:
+    async def save(self, _entity: T, db: Session = next(get_db())) -> Optional[T]:
         db.commit()
         db.refresh(_entity)
         return _entity
 
     async def delete(
-        self, db: Session, criteria: Union[str, int, FindOneOptions]
+        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[DeleteResult]:
-        entity = await self.find_one_or_fail(db, criteria)
+        entity = await self.find_one_or_fail(criteria, db)
 
         db.delete(entity)
         db.commit()
@@ -233,9 +238,9 @@ class BaseRepository(Generic[T]):
         return DeleteResult(raw=[], affected=1)
 
     async def soft_delete(
-        self, db: Session, criteria: Union[str, int, FindOneOptions]
+        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[UpdateResult]:
-        entity = await self.find_one_or_fail(db, criteria)
+        entity = await self.find_one_or_fail(criteria, db)
         columns = get_columns(self.entity)
 
         column = DatabaseUtils.get_column_represent_deleted(columns)
@@ -248,11 +253,11 @@ class BaseRepository(Generic[T]):
 
     async def update(
         self,
-        db: Session,
         criteria: Union[str, int, FindOneOptions],
         partial_entity: Union[BaseModel, dict],
+        db: Session = next(get_db()),
     ) -> Optional[UpdateResult]:
-        entity = await self.find_one_or_fail(db, criteria)
+        entity = await self.find_one_or_fail(criteria, db)
 
         if isinstance(partial_entity, BaseModel):
             partial_entity = partial_entity.dict(exclude_unset=True)

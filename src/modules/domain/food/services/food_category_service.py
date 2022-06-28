@@ -30,11 +30,11 @@ class FoodCategoryService:
         self, food_category_dto: CreateFoodCategoryDto, db: Session
     ) -> Optional[FoodCategoryDto]:
         new_food_category = await self.food_category_repository.create(
-            db, food_category_dto
+            food_category_dto, db
         )
 
         new_food_category = await self.food_category_repository.save(
-            db, new_food_category
+            new_food_category, db
         )
         return FoodCategoryDto(**new_food_category.__dict__)
 
@@ -45,7 +45,7 @@ class FoodCategoryService:
         [
             all_food_categories,
             total,
-        ] = await self.food_category_repository.find_and_count(db, pagination)
+        ] = await self.food_category_repository.find_and_count(pagination, db)
 
         return create_pagination_response_dto(
             [
@@ -61,11 +61,11 @@ class FoodCategoryService:
         self, food_category_id: str, db: Session
     ) -> Optional[FoodCategoryDto]:
         food_category = await self.food_category_repository.find_one_or_fail(
-            db,
             {
                 "where": FoodCategory.id == food_category_id,
                 "relations": ["food_category"],
             },
+            db,
         )
 
         return FoodCategoryDto(**food_category.__dict__)
@@ -74,10 +74,10 @@ class FoodCategoryService:
         self, id: str, update_food_category_dto: UpdateFoodCategoryDto, db: Session
     ) -> Optional[UpdateResult]:
         return await self.food_category_repository.update(
-            db, id, update_food_category_dto
+            id, update_food_category_dto, db
         )
 
     async def delete_food_category(
         self, food_category_id: str, db: Session
     ) -> Optional[UpdateResult]:
-        return await self.food_category_repository.soft_delete(db, food_category_id)
+        return await self.food_category_repository.soft_delete(food_category_id, db)

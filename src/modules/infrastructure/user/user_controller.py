@@ -1,8 +1,9 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from starlette.status import HTTP_201_CREATED
 
 from src.core.constants.enum.user_role import UserRole
 from src.core.decorators.http_decorator import Auth
@@ -21,7 +22,7 @@ user_service = UserService()
 
 
 @user_router.post(
-    "/create", status_code=status.HTTP_201_CREATED, response_model=UserDto
+    "/create", status_code=HTTP_201_CREATED, response_model=UserDto
 )
 async def create_user(
     request: CreateUserDto, database: Session = Depends(get_db)

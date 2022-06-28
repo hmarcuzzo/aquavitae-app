@@ -1,8 +1,9 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from starlette.status import HTTP_201_CREATED
 
 from src.core.common.dto.pagination_response_dto import PaginationResponseDto
 from src.core.constants.enum.user_role import UserRole
@@ -32,7 +33,7 @@ food_category_service = FoodCategoryService()
 
 @food_category_router.post(
     "/create",
-    status_code=status.HTTP_201_CREATED,
+    status_code=HTTP_201_CREATED,
     response_model=FoodCategoryDto,
     dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
 )
