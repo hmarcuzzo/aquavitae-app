@@ -1,13 +1,24 @@
-from typing import Any, List
+from datetime import datetime
+from typing import List
 
-from src.core.common.dto.base_response_dto import BaseResponseDto
+from pydantic import BaseModel, Extra, Field
 
 
-class ExceptionResponseDto(BaseResponseDto):
-    def __init__(
-        self, exc: List[Any], status_code: int, timestamp: str, path: str, method: str
-    ):
-        super().__init__(status_code=status_code, exc=exc)
-        self.timestamp = timestamp
-        self.path = path
-        self.method = method
+class DetailResponseDto(BaseModel):
+    loc: List[str] = Field(title="Location")
+    msg: str = Field(title="Message")
+    type: str = Field(title="Error Type")
+
+    class Config:
+        extra = Extra.forbid
+
+
+class ExceptionResponseDto(BaseModel):
+    detail: List[DetailResponseDto]
+    status_code: int = 422
+    timestamp: datetime = Field(title="Timestamp of the Request")
+    path: str = Field(title="Request Path")
+    method: str = Field(title="Request Method")
+
+    class Config:
+        extra = Extra.forbid

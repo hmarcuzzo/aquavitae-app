@@ -7,7 +7,7 @@ from sqlalchemy.orm import Query, Session, subqueryload
 from sqlalchemy_utils import get_class_by_table, get_columns
 
 from src.core.types.delete_result_type import DeleteResult
-from src.core.types.exceptions_type import InternalServerError, NotFoundException
+from src.core.types.exceptions_type import NotFoundException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
@@ -52,7 +52,7 @@ class BaseRepository(Generic[T]):
             elif key == "with_deleted":
                 self.with_deleted = options_dict["with_deleted"]
             else:
-                raise InternalServerError(f"Unknown option: {key} in FindOptions")
+                raise KeyError(f"Unknown option: {key} in FindOptions")
 
         return query
 
@@ -248,7 +248,7 @@ class BaseRepository(Generic[T]):
             db.commit()
             return UpdateResult(raw=[], affected=1, generatedMaps=[])
 
-        raise InternalServerError('Could not find any column with "delete_column" metadata')
+        raise ValueError('Could not find any column with "delete_column" metadata')
 
     async def update(
         self,

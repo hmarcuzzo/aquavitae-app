@@ -1,26 +1,23 @@
 import json
+from copy import deepcopy
 from datetime import datetime
-from typing import Any
+from typing import List, Union
 
 from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_401_UNAUTHORIZED,
-    HTTP_403_FORBIDDEN,
-    HTTP_404_NOT_FOUND,
-    HTTP_500_INTERNAL_SERVER_ERROR,
+    HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
-from src.core.common.dto.detail_response_dto import DetailResponseDto
-from src.core.common.dto.exception_response_dto import ExceptionResponseDto
+from src.core.common.dto.exception_response_dto import DetailResponseDto, ExceptionResponseDto
 from src.core.types.exceptions_type import (
     BadRequestException,
     ForbiddenException,
-    InternalServerError,
     NotFoundException,
     UnauthorizedException,
 )
-from src.core.utils.dictionary_utils import DictionaryUtils
+from src.core.utils.json_utils import JsonUtils
 
 
 class HttpExceptionsHandler:
@@ -29,94 +26,71 @@ class HttpExceptionsHandler:
         self.add_exceptions_handler()
 
     def add_exceptions_handler(self):
+        @self.app.exception_handler(StarletteHTTPException)
+        async def http_exception_handler(request: Request, exc) -> Response:
+            return Response(
+                status_code=exc.status_code,
+                content=json.dumps(
+                    self.global_exception_error_message(
+                        status_code=exc.status_code,
+                        detail=exc.detail,
+                        request=request,
+                    ).__dict__,
+                    default=JsonUtils.json_serial,
+                ),
+            )
+
+        @self.app.exception_handler(RequestValidationError)
+        async def validation_exception_handler(
+            request: Request, exc: RequestValidationError
+        ) -> Response:
+            return Response(
+                status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+                content=json.dumps(
+                    self.global_exception_error_message(
+                        status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=[DetailResponseDto(**detail) for detail in exc.errors()],
+                        request=request,
+                    ).__dict__,
+                    default=JsonUtils.json_serial,
+                ),
+            )
+
         @self.app.exception_handler(BadRequestException)
+        @self.app.exception_handler(UnauthorizedException)
+        @self.app.exception_handler(ForbiddenException)
+        @self.app.exception_handler(NotFoundException)
         async def bad_request_exception_handler(
             request: Request, exc: BadRequestException
         ) -> Response:
-            return Response(
-                status_code=HTTP_400_BAD_REQUEST,
-                content=json.dumps(
-                    self.global_exception_error_message(
-                        status_code=HTTP_400_BAD_REQUEST,
-                        exc=exc,
-                        request=request,
-                    ).__dict__
-                ),
-            )
+            detail = deepcopy(exc)
+            delattr(detail, "status_code")
 
-        @self.app.exception_handler(NotFoundException)
-        async def not_found_exception_handler(
-            request: Request, exc: NotFoundException
-        ) -> Response:
             return Response(
-                status_code=HTTP_404_NOT_FOUND,
+                status_code=exc.status_code,
                 content=json.dumps(
                     self.global_exception_error_message(
-                        status_code=HTTP_404_NOT_FOUND,
-                        exc=exc,
+                        status_code=exc.status_code,
+                        detail=DetailResponseDto(**detail.__dict__),
                         request=request,
-                    ).__dict__
-                ),
-            )
-
-        @self.app.exception_handler(UnauthorizedException)
-        async def unauthorized_exception_handler(
-            request: Request, exc: UnauthorizedException
-        ) -> Response:
-            return Response(
-                status_code=HTTP_401_UNAUTHORIZED,
-                content=json.dumps(
-                    self.global_exception_error_message(
-                        status_code=HTTP_401_UNAUTHORIZED,
-                        exc=exc,
-                        request=request,
-                    ).__dict__
-                ),
-            )
-
-        @self.app.exception_handler(ForbiddenException)
-        async def forbidden_exception_handler(
-            request: Request, exc: ForbiddenException
-        ) -> Response:
-            return Response(
-                status_code=HTTP_403_FORBIDDEN,
-                content=json.dumps(
-                    self.global_exception_error_message(
-                        status_code=HTTP_403_FORBIDDEN,
-                        exc=exc,
-                        request=request,
-                    ).__dict__
-                ),
-            )
-
-        @self.app.exception_handler(InternalServerError)
-        async def internal_server_error_exception_handler(
-            request: Request, exc: InternalServerError
-        ) -> Response:
-            return Response(
-                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                content=json.dumps(
-                    self.global_exception_error_message(
-                        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                        exc=exc,
-                        request=request,
-                    ).__dict__
+                    ).__dict__,
+                    default=JsonUtils.json_serial,
                 ),
             )
 
     @staticmethod
     def global_exception_error_message(
         status_code: int,
-        exc: Any,
+        detail: Union[DetailResponseDto, List[DetailResponseDto]],
         request: Request,
     ) -> ExceptionResponseDto:
+        if not isinstance(detail, List):
+            detail = [detail]
+
         return ExceptionResponseDto(
+            detail=detail,
             status_code=status_code,
-            exc=[
-                DictionaryUtils.remove_none_values(DetailResponseDto(element).__dict__)
-                for element in [exc]
-            ],
-            timestamp=str(datetime.now().astimezone()),
+            timestamp=datetime.now().astimezone(),
             path=request.url.path,
             method=request.method,
         )
