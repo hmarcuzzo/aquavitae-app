@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from sqlalchemy import Column, DateTime, Enum, event, String, UniqueConstraint
+from sqlalchemy.orm import relationship
 from sqlalchemy_utils import has_changes
 
 from src.core.constants.enum.user_role import UserRole
@@ -16,18 +17,14 @@ class User(BaseEntity):
     role: UserRole = Column(Enum(UserRole), nullable=False, default=UserRole.USER)
     last_access: DateTime = Column(DateTime(timezone=True), nullable=True)
 
-    __table_args__ = (
-        UniqueConstraint("email", "deleted_at", name="unique_user_email_active"),
+    personal_data = relationship(
+        "PersonalData", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
 
+    __table_args__ = (UniqueConstraint("email", "deleted_at", name="unique_user_email_active"),)
+
     def __init__(
-        self,
-        name: str,
-        email: str,
-        password: str,
-        role: UserRole = UserRole.USER,
-        *args,
-        **kwargs
+        self, name: str, email: str, password: str, role: UserRole = UserRole.USER, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.name = name
