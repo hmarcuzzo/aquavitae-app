@@ -33,7 +33,7 @@ class HttpExceptionsHandler:
                 content=json.dumps(
                     self.global_exception_error_message(
                         status_code=exc.status_code,
-                        detail=exc.detail,
+                        detail=DetailResponseDto(loc=[], msg=exc.detail, type=exc.detail),
                         request=request,
                     ).__dict__,
                     default=JsonUtils.json_serial,
