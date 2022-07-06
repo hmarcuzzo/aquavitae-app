@@ -12,7 +12,8 @@ class ActivityLevel(BaseEntity):
     factor: int = Column(Integer, nullable=False)
 
     personal_data = relationship(
-        "PersonalData", back_populates="activity_level", cascade="all, delete-orphan"
+        "PersonalData",
+        back_populates="activity_level",
     )
 
     def __init__(self, description: str, factor: int, *args, **kwargs):

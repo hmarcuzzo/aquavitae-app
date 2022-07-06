@@ -15,7 +15,7 @@ from src.modules.domain.personal_data.dto.activity_level.create_activity_level_d
 from src.modules.domain.personal_data.dto.activity_level.update_activity_level_dto import (
     UpdateActivityLevelDto,
 )
-from src.modules.domain.personal_data.entities.activity_level import ActivityLevel
+from src.modules.domain.personal_data.entities.activity_level_entity import ActivityLevel
 from src.modules.domain.personal_data.repositories.activity_level_repository import (
     ActivityLevelRepository,
 )

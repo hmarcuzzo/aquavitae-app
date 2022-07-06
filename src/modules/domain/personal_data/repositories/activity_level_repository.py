@@ -1,4 +1,4 @@
-from src.modules.domain.personal_data.entities.activity_level import ActivityLevel
+from src.modules.domain.personal_data.entities.activity_level_entity import ActivityLevel
 from src.modules.infrastructure.database.base_repository import BaseRepository
 
 

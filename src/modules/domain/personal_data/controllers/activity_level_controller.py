@@ -16,7 +16,7 @@ from src.modules.domain.personal_data.dto.activity_level.activity_level_query_dt
                                                                                           OrderByActivityLevelQueryDto)
 from src.modules.domain.personal_data.dto.activity_level.create_activity_level_dto import CreateActivityLevelDto
 from src.modules.domain.personal_data.dto.activity_level.update_activity_level_dto import UpdateActivityLevelDto
-from src.modules.domain.personal_data.entities.activity_level import ActivityLevel
+from src.modules.domain.personal_data.entities.activity_level_entity import ActivityLevel
 from src.modules.domain.personal_data.services.activity_level_service import ActivityLevelService
 from src.modules.infrastructure.database import get_db
 
