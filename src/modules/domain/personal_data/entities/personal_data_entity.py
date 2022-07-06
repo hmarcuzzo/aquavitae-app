@@ -12,18 +12,18 @@ class PersonalData(BaseEntity):
     first_name: String = Column(String(255), nullable=False)
     last_name: String = Column(String(255), nullable=False)
     birthday: Date = Column(Date, nullable=False)
-    occupation: String = Column(String(255), nullable=False)
+    occupation: String = Column(String(255), nullable=True)
     food_history: String = Column(String(1000), nullable=True)
     bedtime: Time = Column(Time(timezone=True), nullable=False)
     wake_up: Time = Column(Time(timezone=True), nullable=False)
 
     activity_level_id: UUID = Column(
-        UUID(as_uuid=True), ForeignKey("activity_level.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("activity_level.id"), nullable=True
     )
     activity_level = relationship("ActivityLevel", back_populates="personal_data")
 
     user_id: UUID = Column(
-        UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"), unique=True, nullable=False
     )
     user = relationship("User", back_populates="personal_data")
 
@@ -32,12 +32,12 @@ class PersonalData(BaseEntity):
         first_name: String,
         last_name: String,
         birthday: DateTime,
-        occupation: String,
-        food_history: String,
         bedtime: Time,
         wake_up: Time,
-        activity_level_id: UUID,
         user_id: UUID,
+        occupation: String = None,
+        food_history: String = None,
+        activity_level_id: UUID = None,
         *args,
         **kwargs
     ):

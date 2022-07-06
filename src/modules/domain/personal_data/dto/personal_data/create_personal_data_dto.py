@@ -9,7 +9,7 @@ class CreatePersonalDataDto(BaseModel):
     first_name: constr(max_length=255)
     last_name: constr(max_length=255)
     birthday: date
-    occupation: constr(max_length=255)
+    occupation: Optional[constr(max_length=255)]
     food_history: Optional[constr(max_length=1000)]
     bedtime: time
     wake_up: time

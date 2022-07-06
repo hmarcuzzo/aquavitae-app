@@ -13,11 +13,11 @@ class PersonalDataDto(BaseDto):
     first_name: constr(max_length=255)
     last_name: constr(max_length=255)
     birthday: date
-    occupation: constr(max_length=255)
+    occupation: Optional[constr(max_length=255)]
     food_history: Optional[constr(max_length=1000)]
     bedtime: time
     wake_up: time
-    activity_level: Union[ActivityLevelDto, UUID]
+    activity_level: Optional[Union[ActivityLevelDto, UUID]]
     user: Union[UserDto, UUID]
 
     def __init__(self, **kwargs):
