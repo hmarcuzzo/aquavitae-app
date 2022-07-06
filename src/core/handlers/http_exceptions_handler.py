@@ -33,7 +33,7 @@ class HttpExceptionsHandler:
                 content=json.dumps(
                     self.global_exception_error_message(
                         status_code=exc.status_code,
-                        detail=DetailResponseDto(loc=[], msg=exc.detail, type=exc.detail),
+                        detail=DetailResponseDto(loc=[], msg=exc.detail, type="starlette_http_exception"),
                         request=request,
                     ).__dict__,
                     default=JsonUtils.json_serial,
