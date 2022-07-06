@@ -41,3 +41,6 @@ class User(BaseEntity):
 def before_insert(mapper, connection, target: User) -> None:
     if has_changes(target, "password"):
         target.password = generate_hash(target.password)
+
+    if has_changes(target, "last_access"):
+        target.updated_at = target.last_access
