@@ -124,6 +124,62 @@ class BaseRepository(Generic[T]):
 
         return result
 
+    def __get_cascade_relations(self, entity: T) -> List[Any]:
+        cascade_relations = []
+
+        for relation in inspect(inspect(entity).class_).relationships:
+            cascade_relation = getattr(entity, relation.key)
+
+            delete_column = DatabaseUtils.get_column_represent_deleted(
+                get_columns(relation.mapper.class_)
+            )
+            if delete_column is None:
+                raise ValueError(f'Relation "{relation.key}" has no "deleted" column')
+
+            if relation.cascade.delete_orphan and not getattr(
+                cascade_relation,
+                delete_column.name,
+            ):
+                cascade_relations.append(cascade_relation)
+
+        return cascade_relations
+
+    async def __soft_delete_cascade_relations(self, entity: T, db: Session) -> int:
+        rowcount = 0
+
+        cascade_entities = self.__get_cascade_relations(entity)
+        for cascade_entity in cascade_entities:
+            result = await BaseRepository(inspect(cascade_entity).class_).__soft_delete_cascade(
+                str(cascade_entity.id), db
+            )
+            rowcount = result["affected"]
+
+        return rowcount
+
+    def __soft_delete_entity(self, entity: T, db: Session) -> int:
+        entity_class = inspect(entity).class_
+        delete_column = DatabaseUtils.get_column_represent_deleted(get_columns(entity_class))
+        if delete_column is None:
+            raise ValueError(f'Entity "{entity_class.__name__}" has no "deleted" column')
+
+        if not getattr(entity, delete_column.name):
+            setattr(entity, delete_column.name, datetime.now())
+            db.commit()
+
+            return 1
+
+        return 0
+
+    async def __soft_delete_cascade(
+        self, criteria: Union[str, int, FindOneOptions], db: Session
+    ) -> Optional[UpdateResult]:
+        entity = await self.find_one_or_fail(criteria, db)
+
+        rowcount = await self.__soft_delete_cascade_relations(entity, db)
+        rowcount += self.__soft_delete_entity(entity, db)
+
+        return UpdateResult(raw=[], affected=rowcount, generatedMaps=[])
+
     # ----------- PUBLIC METHODS -----------
     async def find(
         self, options_dict: FindManyOptions = None, db: Session = next(get_db())
@@ -205,9 +261,7 @@ class BaseRepository(Generic[T]):
 
         if not result:
             message = f'Could not find any entity of type "{self.entity.__name__}" that matches the criteria'
-            raise NotFoundException(
-                message, [self.entity.__name__, str(criteria)]
-            )  # TODO: Resolver criteria
+            raise NotFoundException(message, [self.entity.__name__])
 
         return result
 
@@ -239,16 +293,12 @@ class BaseRepository(Generic[T]):
     async def soft_delete(
         self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[UpdateResult]:
-        entity = await self.find_one_or_fail(criteria, db)
-        columns = get_columns(self.entity)
-
-        column = DatabaseUtils.get_column_represent_deleted(columns)
-        if column is not None:
-            setattr(entity, column.name, datetime.now())
-            db.commit()
-            return UpdateResult(raw=[], affected=1, generatedMaps=[])
-
-        raise ValueError('Could not find any column with "delete_column" metadata')
+        try:
+            db.begin_nested()
+            return await self.__soft_delete_cascade(criteria, db)
+        except Exception as e:
+            db.rollback()
+            raise e
 
     async def update(
         self,
