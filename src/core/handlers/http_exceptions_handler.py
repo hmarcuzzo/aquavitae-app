@@ -60,7 +60,7 @@ class HttpExceptionsHandler:
         @self.app.exception_handler(UnauthorizedException)
         @self.app.exception_handler(ForbiddenException)
         @self.app.exception_handler(NotFoundException)
-        async def bad_request_exception_handler(
+        async def custom_exceptions_handler(
             request: Request, exc: BadRequestException
         ) -> Response:
             detail = deepcopy(exc)
