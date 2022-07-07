@@ -128,19 +128,23 @@ class BaseRepository(Generic[T]):
         cascade_relations = []
 
         for relation in inspect(inspect(entity).class_).relationships:
-            cascade_relation = getattr(entity, relation.key)
-
             delete_column = DatabaseUtils.get_column_represent_deleted(
                 get_columns(relation.mapper.class_)
             )
             if delete_column is None:
                 raise ValueError(f'Relation "{relation.key}" has no "deleted" column')
 
-            if relation.cascade.delete_orphan and not getattr(
-                cascade_relation,
-                delete_column.name,
-            ):
-                cascade_relations.append(cascade_relation)
+            cr = getattr(entity, relation.key)
+            if cr:
+                if not isinstance(cr, List):
+                    cr = [cr]
+
+                for cascade_relation in cr:
+                    if relation.cascade.delete_orphan and not getattr(
+                        cascade_relation,
+                        delete_column.name,
+                    ):
+                        cascade_relations.append(cascade_relation)
 
         return cascade_relations
 
