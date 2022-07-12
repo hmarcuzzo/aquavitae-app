@@ -56,9 +56,9 @@ class BaseRepository(Generic[T]):
 
         return query
 
-    @classmethod
+    @staticmethod
     def __fix_options_dict(
-        cls, options_dict: Union[FindManyOptions, FindOneOptions]
+        options_dict: Union[FindManyOptions, FindOneOptions]
     ) -> Union[FindManyOptions, FindOneOptions]:
         for attribute in ["where", "order_by", "options"]:
             if attribute in options_dict and not isinstance(options_dict[attribute], list):
@@ -124,7 +124,8 @@ class BaseRepository(Generic[T]):
 
         return result
 
-    def __get_cascade_relations(self, entity: T) -> List[Any]:
+    @staticmethod
+    def __get_cascade_relations(entity: T) -> List[Any]:
         cascade_relations = []
 
         for relation in inspect(inspect(entity).class_).relationships:
@@ -160,7 +161,8 @@ class BaseRepository(Generic[T]):
 
         return rowcount
 
-    def __soft_delete_entity(self, entity: T, db: Session) -> int:
+    @staticmethod
+    def __soft_delete_entity(entity: T, db: Session) -> int:
         entity_class = inspect(entity).class_
         delete_column = DatabaseUtils.get_column_represent_deleted(get_columns(entity_class))
         if delete_column is None:
@@ -279,7 +281,8 @@ class BaseRepository(Generic[T]):
         db.add(_entity)
         return _entity
 
-    async def save(self, _entity: T, db: Session = next(get_db())) -> Optional[T]:
+    @staticmethod
+    async def save(_entity: T, db: Session = next(get_db())) -> Optional[T]:
         db.commit()
         db.refresh(_entity)
         return _entity
