@@ -41,8 +41,16 @@ To build the project run the following commands in the terminal, step by step:
     $ docker pull postgres
     $ docker run --name <CONTAINER_NAME> -e POSTGRES_USER=<DATABASE_USER> -e POSTGRES_PASSWORD=<DATABASE_PASSWORD> -p 5432:5432 -d postgres
     ```
-
-
+  
+- Create the database with **alembic**
+    ```
+    $ alembic upgrade head
+    ```
+  
+- Execute the project
+    ```
+    $ python src/main.py
+    ```
 
 ## License
 [MIT License](/LICENSE.md)
