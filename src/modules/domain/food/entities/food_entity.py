@@ -33,6 +33,7 @@ class Food(BaseEntity):
         potassium: Float(2),
         phosphorus: Float(2),
         sodium: Float(2),
+        food_category_id: UUID,
         *args,
         **kwargs
     ):
@@ -45,3 +46,4 @@ class Food(BaseEntity):
         self.potassium = potassium
         self.phosphorus = phosphorus
         self.sodium = sodium
+        self.food_category_id = food_category_id

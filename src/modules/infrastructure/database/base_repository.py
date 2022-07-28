@@ -1,4 +1,3 @@
-from copy import copy
 from datetime import datetime
 from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
@@ -8,11 +7,12 @@ from sqlalchemy.orm import Query, Session, subqueryload
 from sqlalchemy_utils import get_class_by_table, get_columns
 
 from src.core.types.delete_result_type import DeleteResult
-from src.core.types.exceptions_type import InternalServerError, NotFoundException
+from src.core.types.exceptions_type import NotFoundException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
 from src.core.utils.database_utils import DatabaseUtils
+from . import get_db
 from .base import Base
 from .soft_delete_filter import pause_listener
 
@@ -52,13 +52,13 @@ class BaseRepository(Generic[T]):
             elif key == "with_deleted":
                 self.with_deleted = options_dict["with_deleted"]
             else:
-                raise InternalServerError(f"Unknown option: {key} in FindOptions")
+                raise KeyError(f"Unknown option: {key} in FindOptions")
 
         return query
 
-    @classmethod
+    @staticmethod
     def __fix_options_dict(
-        cls, options_dict: Union[FindManyOptions, FindOneOptions]
+        options_dict: Union[FindManyOptions, FindOneOptions]
     ) -> Union[FindManyOptions, FindOneOptions]:
         for attribute in ["where", "order_by", "options"]:
             if attribute in options_dict and not isinstance(options_dict[attribute], list):
@@ -87,7 +87,7 @@ class BaseRepository(Generic[T]):
         for referred_repository, key, value in self.__get_repository_from_foreign_keys(
             partial_entity
         ):
-            await referred_repository.find_one_or_fail(db, str(value))
+            await referred_repository.find_one_or_fail(str(value), db)
 
         return True
 
@@ -106,7 +106,7 @@ class BaseRepository(Generic[T]):
                     result.__dict__
                 ):
                     if value:
-                        _entity = await referred_repository.find_one(db, str(value))
+                        _entity = await referred_repository.find_one(str(value), db)
 
                         if _entity is None:
                             setattr(result, f_key, None)
@@ -124,8 +124,72 @@ class BaseRepository(Generic[T]):
 
         return result
 
+    @staticmethod
+    def __get_cascade_relations(entity: T) -> List[Any]:
+        cascade_relations = []
+
+        for relation in inspect(inspect(entity).class_).relationships:
+            delete_column = DatabaseUtils.get_column_represent_deleted(
+                get_columns(relation.mapper.class_)
+            )
+            if delete_column is None:
+                raise ValueError(f'Relation "{relation.key}" has no "deleted" column')
+
+            cr = getattr(entity, relation.key)
+            if cr:
+                if not isinstance(cr, List):
+                    cr = [cr]
+
+                for cascade_relation in cr:
+                    if relation.cascade.delete_orphan and not getattr(
+                        cascade_relation,
+                        delete_column.name,
+                    ):
+                        cascade_relations.append(cascade_relation)
+
+        return cascade_relations
+
+    async def __soft_delete_cascade_relations(self, entity: T, db: Session) -> int:
+        rowcount = 0
+
+        cascade_entities = self.__get_cascade_relations(entity)
+        for cascade_entity in cascade_entities:
+            result = await BaseRepository(inspect(cascade_entity).class_).__soft_delete_cascade(
+                str(cascade_entity.id), db
+            )
+            rowcount = result["affected"]
+
+        return rowcount
+
+    @staticmethod
+    def __soft_delete_entity(entity: T, db: Session) -> int:
+        entity_class = inspect(entity).class_
+        delete_column = DatabaseUtils.get_column_represent_deleted(get_columns(entity_class))
+        if delete_column is None:
+            raise ValueError(f'Entity "{entity_class.__name__}" has no "deleted" column')
+
+        if not getattr(entity, delete_column.name):
+            setattr(entity, delete_column.name, datetime.now())
+            db.commit()
+
+            return 1
+
+        return 0
+
+    async def __soft_delete_cascade(
+        self, criteria: Union[str, int, FindOneOptions], db: Session
+    ) -> Optional[UpdateResult]:
+        entity = await self.find_one_or_fail(criteria, db)
+
+        rowcount = await self.__soft_delete_cascade_relations(entity, db)
+        rowcount += self.__soft_delete_entity(entity, db)
+
+        return UpdateResult(raw=[], affected=rowcount, generatedMaps=[])
+
     # ----------- PUBLIC METHODS -----------
-    async def find(self, db: Session, options_dict: FindManyOptions = None) -> Optional[List[T]]:
+    async def find(
+        self, options_dict: FindManyOptions = None, db: Session = next(get_db())
+    ) -> Optional[List[T]]:
         query = db.query(self.entity)
 
         query = self.__apply_options(query, options_dict)
@@ -148,7 +212,7 @@ class BaseRepository(Generic[T]):
             return result
 
     async def find_and_count(
-        self, db: Session, options_dict: FindManyOptions = None
+        self, options_dict: FindManyOptions = None, db: Session = next(get_db())
     ) -> Optional[Tuple[List[T], int]]:
         query = db.query(self.entity)
 
@@ -172,7 +236,9 @@ class BaseRepository(Generic[T]):
             self.with_deleted = False
             return result, count
 
-    async def find_one(self, db: Session, criteria: Union[str, int, FindOneOptions]) -> Optional[T]:
+    async def find_one(
+        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
+    ) -> Optional[T]:
         query = db.query(self.entity)
 
         if isinstance(criteria, (str, int)):
@@ -195,19 +261,17 @@ class BaseRepository(Generic[T]):
             return result
 
     async def find_one_or_fail(
-        self, db: Session, criteria: Union[str, int, FindOneOptions]
+        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[T]:
-        result = await self.find_one(db, criteria)
+        result = await self.find_one(criteria, db)
 
         if not result:
             message = f'Could not find any entity of type "{self.entity.__name__}" that matches the criteria'
-            raise NotFoundException(
-                message, [self.entity.__name__, str(criteria)]
-            )  # TODO: Resolver criteria
+            raise NotFoundException(message, [self.entity.__name__])
 
         return result
 
-    async def create(self, db: Session, _entity: Union[T, BaseModel]) -> T:
+    async def create(self, _entity: Union[T, BaseModel], db: Session = next(get_db())) -> T:
         if isinstance(_entity, BaseModel):
             partial_data_entity = _entity.dict(exclude_unset=True)
             _entity = self.entity(**partial_data_entity)
@@ -217,15 +281,16 @@ class BaseRepository(Generic[T]):
         db.add(_entity)
         return _entity
 
-    async def save(self, db: Session, _entity: T) -> Optional[T]:
+    @staticmethod
+    async def save(_entity: T, db: Session = next(get_db())) -> Optional[T]:
         db.commit()
         db.refresh(_entity)
         return _entity
 
     async def delete(
-        self, db: Session, criteria: Union[str, int, FindOneOptions]
+        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[DeleteResult]:
-        entity = await self.find_one_or_fail(db, criteria)
+        entity = await self.find_one_or_fail(criteria, db)
 
         db.delete(entity)
         db.commit()
@@ -233,26 +298,22 @@ class BaseRepository(Generic[T]):
         return DeleteResult(raw=[], affected=1)
 
     async def soft_delete(
-        self, db: Session, criteria: Union[str, int, FindOneOptions]
+        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[UpdateResult]:
-        entity = await self.find_one_or_fail(db, criteria)
-        columns = get_columns(self.entity)
-
-        column = DatabaseUtils.get_column_represent_deleted(columns)
-        if column is not None:
-            setattr(entity, column.name, datetime.now())
-            db.commit()
-            return UpdateResult(raw=[], affected=1, generatedMaps=[])
-
-        raise InternalServerError('Could not find any column with "delete_column" metadata')
+        try:
+            db.begin_nested()
+            return await self.__soft_delete_cascade(criteria, db)
+        except Exception as e:
+            db.rollback()
+            raise e
 
     async def update(
         self,
-        db: Session,
         criteria: Union[str, int, FindOneOptions],
         partial_entity: Union[BaseModel, dict],
+        db: Session = next(get_db()),
     ) -> Optional[UpdateResult]:
-        entity = await self.find_one_or_fail(db, criteria)
+        entity = await self.find_one_or_fail(criteria, db)
 
         if isinstance(partial_entity, BaseModel):
             partial_entity = partial_entity.dict(exclude_unset=True)

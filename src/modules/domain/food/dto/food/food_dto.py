@@ -16,7 +16,7 @@ class FoodDto(BaseDto):
     potassium: condecimal(decimal_places=2)
     phosphorus: condecimal(decimal_places=2)
     sodium: condecimal(decimal_places=2)
-    food_category: Union[FoodCategoryDto, UUID] = None
+    food_category: Union[FoodCategoryDto, UUID]
 
     def __init__(self, **kwargs):
         if "food_category" not in kwargs:
