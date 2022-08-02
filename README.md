@@ -51,6 +51,16 @@ To build the project run the following commands in the terminal, step by step:
     ```
     $ python src/main.py
     ```
+  
+## How to execute the tests
+To execute the tests run the following commands in the terminal:
+  ```
+  $ cd /path/to/project
+  $ python -m pytest
+  ```
+
+  * *Note*: You can also run in terminal just ```$ pytest```
+
 
 ## License
 [MIT License](/LICENSE.md)

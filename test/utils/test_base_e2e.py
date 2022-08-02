@@ -1,9 +1,12 @@
 import asyncio
-from typing import Optional
+from typing import List, Optional
 
 import pytest
 from fastapi.security import OAuth2PasswordRequestForm
+from httpx import AsyncClient
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
+from src.main import app
 from src.modules.infrastructure.auth.auth_service import AuthService
 from src.modules.infrastructure.auth.dto.login_payload_dto import LoginPayloadDto
 from src.modules.infrastructure.user.entities.user_entity import User
@@ -15,6 +18,7 @@ class TestBaseE2E:
     auth_service = AuthService()
 
     base_url = "http://localhost:3000"
+    fixtures_to_reload = None
 
     # ---------------------- PRIVATE METHODS ----------------------
     async def __login_user(
@@ -25,33 +29,50 @@ class TestBaseE2E:
             self.db_test_utils.db,
         )
 
+    # ---------------------- PUBLIC METHODS ----------------------
+    async def no_authentication(self, route: str) -> None:
+        async with AsyncClient(app=app, base_url=self.base_url) as ac:
+            assert (await ac.get(route)).status_code == HTTP_401_UNAUTHORIZED
+
+    async def different_required_authentication(
+        self, route: str, logins_payload: List[LoginPayloadDto]
+    ) -> None:
+        for login_payload in logins_payload:
+            async with AsyncClient(app=app, base_url=self.base_url) as ac:
+                assert (
+                    await ac.get(
+                        route,
+                        headers={"Authorization": f"Bearer {login_payload.access_token}"},
+                    )
+                ).status_code == HTTP_403_FORBIDDEN
+
     # ---------------------- PRIVATE FIXTURES ----------------------
-    @pytest.fixture(scope="module", autouse=True)
+    @pytest.fixture(scope="class", autouse=True)
     async def __run_around_tests(self) -> None:
-        await self.db_test_utils.reload_fixtures()
+        await self.db_test_utils.reload_fixtures(self.fixtures_to_reload)
 
         yield
 
         await self.db_test_utils.close_db_connection()
 
     # ---------------------- PUBLIC FIXTURES ----------------------
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="class")
     def event_loop(self) -> asyncio.AbstractEventLoop:
         loop = asyncio.get_event_loop()
         yield loop
         loop.close()
 
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="class")
     async def user_common(self) -> Optional[LoginPayloadDto]:
         user_common = self.db_test_utils.get_entity_objects(User)[0]
         return await self.__login_user(user_common["email"])
 
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="class")
     async def user_nutricionist(self) -> Optional[LoginPayloadDto]:
         user_nutri = self.db_test_utils.get_entity_objects(User)[1]
         return await self.__login_user(user_nutri["email"])
 
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="class")
     async def user_admin(self) -> Optional[LoginPayloadDto]:
         user_admin = self.db_test_utils.get_entity_objects(User)[2]
         return await self.__login_user(user_admin["email"])
