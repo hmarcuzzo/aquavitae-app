@@ -39,13 +39,13 @@ class AuthService:
 
     # ---------------------- PRIVATE METHODS ----------------------
     async def __validate_user(
-        self, db: Session, userLoginDto: OAuth2PasswordRequestForm
+        self, db: Session, user_login_dto: OAuth2PasswordRequestForm
     ) -> Optional[User]:
         user = await self.user_interface.find_one_user(
-            db, {"where": User.email == userLoginDto.username}
+            db, {"where": User.email == user_login_dto.username}
         )
 
-        if user and validate_hash(userLoginDto.password, user.password):
+        if user and validate_hash(user_login_dto.password, user.password):
             return user
 
         raise UnauthorizedException(f"Invalid credentials.", ["User", "password"])

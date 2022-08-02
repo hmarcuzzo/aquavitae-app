@@ -20,7 +20,8 @@ class DatabaseConfigTest:
         self.db = next(get_db())
 
     # ----------- PRIVATE METHODS -----------
-    def __get_fixture_file(self, entity: Table) -> str:
+    @staticmethod
+    def __get_fixture_file(entity: Table) -> str:
         return os.path.join(
             os.path.dirname(os.path.realpath(__file__)), f"../fixtures/{entity.name}.json"
         )
@@ -41,7 +42,8 @@ class DatabaseConfigTest:
         entity_table = inspect(entity).local_table
         return self.__get_items_from_fixture(entity_table)
 
-    def get_entities(self) -> List[Table]:
+    @staticmethod
+    def get_entities() -> List[Table]:
         return Base.metadata.sorted_tables
 
     async def reload_fixtures(self, entities_input: List[DeclarativeMeta] = None) -> None:
@@ -62,7 +64,8 @@ class DatabaseConfigTest:
         await self.clean_all(list(reversed(entities)))
         await self.load_all(entities)
 
-    async def clean_all(self, entities: List[Table]) -> None:
+    @staticmethod
+    async def clean_all(entities: List[Table]) -> None:
         try:
             for entity in entities:
                 engine.execute(entity.delete())

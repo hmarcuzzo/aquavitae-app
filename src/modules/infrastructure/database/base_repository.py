@@ -84,9 +84,13 @@ class BaseRepository(Generic[T]):
     async def __is_relations_valid(
         self, db: Session, partial_entity: Union[BaseModel, dict]
     ) -> bool:
+        columns = get_columns(self.entity)
+
         for referred_repository, key, value in self.__get_repository_from_foreign_keys(
             partial_entity
         ):
+            if not value and columns[key].nullable:
+                continue
             await referred_repository.find_one_or_fail(str(value), db)
 
         return True
@@ -302,7 +306,10 @@ class BaseRepository(Generic[T]):
     ) -> Optional[UpdateResult]:
         try:
             db.begin_nested()
-            return await self.__soft_delete_cascade(criteria, db)
+            response = await self.__soft_delete_cascade(criteria, db)
+            db.commit()
+            return response
+
         except Exception as e:
             db.rollback()
             raise e
