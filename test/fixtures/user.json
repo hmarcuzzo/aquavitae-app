@@ -20,5 +20,16 @@
     "password": "$argon2id$v=19$m=102400,t=2,p=8$Tcl5L2UsJUToHeMcI6S09g$t5dXx9kyBNEFoXq+4hPrmA",
     "role": "NUTRICIONIST",
     "last_access": null
+  },
+  {
+    "id": "09cdf815-9cda-4a87-8ae9-34c06f915278",
+    "created_at": "2022-06-22 17:11:15.893395 +00:00",
+    "updated_at": "2022-06-22 17:11:15.893395 +00:00",
+    "deleted_at": null,
+    "name": "Henrique Admin",
+    "email": "henrique_admin@gmail.com",
+    "password": "$argon2id$v=19$m=102400,t=2,p=8$Tcl5L2UsJUToHeMcI6S09g$t5dXx9kyBNEFoXq+4hPrmA",
+    "role": "ADMIN",
+    "last_access": null
   }
 ]
