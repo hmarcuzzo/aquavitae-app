@@ -2,6 +2,7 @@ from typing import Optional
 
 import pytest
 from httpx import AsyncClient
+from starlette.status import HTTP_200_OK
 
 from src.core.constants.enum.user_role import UserRole
 from src.main import app
@@ -26,7 +27,7 @@ class TestGetAllUsers(TestBaseE2E):
 
         data = response.json()
 
-        assert response.status_code == 200
+        assert response.status_code == HTTP_200_OK
         assert len(data) >= 0
 
     @pytest.mark.asyncio
@@ -36,10 +37,13 @@ class TestGetAllUsers(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get a list of all users with non required authentication")
-    async def test_user_authentication(
+    async def test_different_required_authentication(
         self, user_common: Optional[LoginPayloadDto], user_nutricionist: Optional[LoginPayloadDto]
     ) -> None:
-        await self.different_required_authentication(self.route, [user_common, user_nutricionist])
+        [
+            await self.different_required_authentication(self.route, user)
+            for user in [user_common, user_nutricionist]
+        ]
 
 
 @pytest.mark.describe(f"GET Route: /{CONTROLLER}/get/<id>")
@@ -57,7 +61,7 @@ class TestGetUserById(TestBaseE2E):
 
         data: dict = response.json()
 
-        assert response.status_code == 200
+        assert response.status_code == HTTP_200_OK
         assert isinstance(data, dict)
         assert data["id"] == "4fbc9c6a-8103-417b-9e76-2856d247b694"
         assert data["role"] == UserRole.NUTRICIONIST.value
@@ -73,4 +77,7 @@ class TestGetUserById(TestBaseE2E):
     async def test_user_authentication(
         self, user_common: Optional[LoginPayloadDto], user_nutricionist: Optional[LoginPayloadDto]
     ) -> None:
-        await self.different_required_authentication(self.route, [user_common, user_nutricionist])
+        [
+            await self.different_required_authentication(self.route, user)
+            for user in [user_common, user_nutricionist]
+        ]
