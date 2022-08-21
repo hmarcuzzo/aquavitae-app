@@ -19,47 +19,54 @@
 </h4>
 
 ## How to execute
-To build the project run the following commands in the terminal, step by step:
+To build the project run the following commands in terminal, step by step:
 
-- Creating a virtual environment with pipenv
+1. Creating a virtual environment with pipenv
     ```
     $ cd /path/to/project
     $ pip install pipenv
     $ pipenv install
     ```
   
-  1. Make sure pip is using python version **3.9**
-  2. If you have problems installing the ***psycopg2*** package run the following commands:
-      ```
-      $ sudo apt install libpq-dev python3.9-dev
-      $ pipenv install
-      ```
+    1. Make sure pip is using python version **3.9**
+    2. If you have problems installing the ***psycopg2*** package run the following commands:
+       ```
+       $ sudo apt install libpq-dev python3.9-dev
+       $ pipenv install
+       ```
 
-- Creating the Postgres database using docker
+2. Creating the Postgres database using docker
     ```
     $ sudo apt install docker docker-compose
     $ docker pull postgres
     $ docker run --name <CONTAINER_NAME> -e POSTGRES_USER=<DATABASE_USER> -e POSTGRES_PASSWORD=<DATABASE_PASSWORD> -p 5432:5432 -d postgres
     ```
   
-- Create the database with **alembic**
+3. Create or update the database with **alembic**
     ```
     $ alembic upgrade head
     ```
   
-- Execute the project
+4. Execute the project
     ```
     $ python src/main.py
     ```
   
 ## How to execute the tests
-To execute the tests run the following commands in the terminal:
-  ```
-  $ cd /path/to/project
-  $ python -m pytest
-  ```
+1. In the **.env** file put your  ```APP_ENV=test ```
+2. Execute the following commands in terminal:
+    - Create or update the test database with **alembic**
+      ```
+      $ cd /path/to/project
+      $ alembic upgrade head
+      ```
+      
+    - Execute all the tests
+      ```
+      $ python -m pytest
+      ```
 
-  * *Note*: You can also run in terminal just ```$ pytest```
+       * *Note*: You can also run in terminal just ```$ pytest```
 
 
 ## License
