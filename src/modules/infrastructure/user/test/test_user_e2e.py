@@ -13,9 +13,12 @@ from starlette.status import (
 
 from src.core.constants.enum.user_role import UserRole
 from src.main import app
+from src.modules.domain.personal_data.services.personal_data_service import PersonalDataService
 from src.modules.infrastructure.auth.dto.login_payload_dto import LoginPayloadDto
 from src.modules.infrastructure.user.user_service import UserService
 from test.test_base_e2e import TestBaseE2E
+
+from src.core.types.exceptions_type import NotFoundException
 
 CONTROLLER = "user"
 user_service = UserService()
@@ -182,6 +185,24 @@ class TestDeleteUser(TestBaseE2E):
             )
 
         assert response.status_code == HTTP_404_NOT_FOUND
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Success: Check if all relation from user common, was deleted")
+    async def test_delete_user_common_relations(
+        self, user_admin: Optional[LoginPayloadDto], user_common: Optional[LoginPayloadDto]
+    ) -> None:
+        personal_data_service = PersonalDataService()
+        with pytest.raises(NotFoundException) as e_info:
+            await personal_data_service.find_one_personal_data(
+                str(user_common.user.id), self.db_test_utils.db
+            )
+
+        assert e_info.type == NotFoundException
+        assert (
+            e_info.value.msg
+            == 'Could not find any entity of type "PersonalData" that matches the criteria'
+        )
+        assert e_info.value.status_code == HTTP_404_NOT_FOUND
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Delete the same user twice")

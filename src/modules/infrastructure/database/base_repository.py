@@ -288,18 +288,9 @@ class BaseRepository(Generic[T]):
 
     @staticmethod
     async def save(_entity: T, db: Session = next(get_db())) -> Optional[T]:
-        try:
-            db.commit()
-            db.refresh(_entity)
-            return _entity
-        except IntegrityError as e:
-            msg = e.args[0].splitlines()[0]
-            loc = (
-                [e.args[0].splitlines()[1].split(":")[1].strip()]
-                if len(e.args[0].splitlines()) > 1
-                else []
-            )
-            raise BadRequestException(msg, loc=loc, _type=e.__class__.__name__)
+        db.commit()
+        db.refresh(_entity)
+        return _entity
 
     async def delete(
         self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
