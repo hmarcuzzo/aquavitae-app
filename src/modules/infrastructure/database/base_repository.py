@@ -2,12 +2,13 @@ from datetime import datetime
 from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import Query, Session, subqueryload
 from sqlalchemy_utils import get_class_by_table, get_columns
 
 from src.core.types.delete_result_type import DeleteResult
-from src.core.types.exceptions_type import NotFoundException
+from src.core.types.exceptions_type import BadRequestException, NotFoundException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
@@ -287,9 +288,18 @@ class BaseRepository(Generic[T]):
 
     @staticmethod
     async def save(_entity: T, db: Session = next(get_db())) -> Optional[T]:
-        db.commit()
-        db.refresh(_entity)
-        return _entity
+        try:
+            db.commit()
+            db.refresh(_entity)
+            return _entity
+        except IntegrityError as e:
+            msg = e.args[0].splitlines()[0]
+            loc = (
+                [e.args[0].splitlines()[1].split(":")[1].strip()]
+                if len(e.args[0].splitlines()) > 1
+                else []
+            )
+            raise BadRequestException(msg, loc=loc, _type=e.__class__.__name__)
 
     async def delete(
         self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())

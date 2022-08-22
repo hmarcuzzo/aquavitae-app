@@ -16,6 +16,17 @@ class TestBaseE2E:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             assert (await ac.get(route)).status_code == HTTP_401_UNAUTHORIZED
 
+    async def get_different_required_authentication(
+        self, route: str, login_payload: LoginPayloadDto
+    ) -> None:
+        async with AsyncClient(app=app, base_url=self.base_url) as ac:
+            assert (
+                await ac.get(
+                    route,
+                    headers={"Authorization": f"Bearer {login_payload.access_token}"},
+                )
+            ).status_code == HTTP_403_FORBIDDEN
+
     async def del_no_authentication(self, route: str) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             assert (await ac.delete(route)).status_code == HTTP_401_UNAUTHORIZED
@@ -24,12 +35,12 @@ class TestBaseE2E:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             assert (await ac.patch(route)).status_code == HTTP_401_UNAUTHORIZED
 
-    async def different_required_authentication(
+    async def patch_different_required_authentication(
         self, route: str, login_payload: LoginPayloadDto
     ) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             assert (
-                await ac.get(
+                await ac.patch(
                     route,
                     headers={"Authorization": f"Bearer {login_payload.access_token}"},
                 )

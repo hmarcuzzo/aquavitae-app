@@ -27,7 +27,7 @@ class TestCreateUser(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Success: Create a new user")
-    async def test_create_new_user(self) -> None:
+    async def test_create_new_user(self, user_admin: Optional[LoginPayloadDto]) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             response = await ac.post(
                 self.route,
@@ -35,6 +35,7 @@ class TestCreateUser(TestBaseE2E):
                     "email": "henrique_teste@gmail.com",
                     "password": "12345678",
                 },
+                headers={"Authorization": f"Bearer {user_admin.access_token}"},
             )
 
         data = response.json()
@@ -51,7 +52,7 @@ class TestCreateUser(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a new user with email that already exists")
-    async def test_create_user_with_same_email(self) -> None:
+    async def test_create_user_with_same_email(self, user_admin: Optional[LoginPayloadDto]) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             assert (
                 await ac.post(
@@ -60,13 +61,17 @@ class TestCreateUser(TestBaseE2E):
                         "email": "henrique_teste@gmail.com",
                         "password": "12345678",
                     },
+                    headers={"Authorization": f"Bearer {user_admin.access_token}"},
                 )
             ).status_code == HTTP_400_BAD_REQUEST
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a user without required fields")
     async def test_create_user_without_required_field(
-        self, user_common: Optional[LoginPayloadDto], user_nutritionist
+        self,
+        user_common: Optional[LoginPayloadDto],
+        user_nutritionist: Optional[LoginPayloadDto],
+        user_admin: Optional[LoginPayloadDto],
     ) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             response = await ac.post(
@@ -74,6 +79,7 @@ class TestCreateUser(TestBaseE2E):
                 json={
                     "password": "12345678",
                 },
+                headers={"Authorization": f"Bearer {user_admin.access_token}"},
             )
 
         data = response.json()
@@ -113,7 +119,7 @@ class TestGetAllUsers(TestBaseE2E):
         self, user: str, request: FixtureRequest
     ) -> None:
         user: LoginPayloadDto = request.getfixturevalue(user)
-        await self.different_required_authentication(self.route, user)
+        await self.get_different_required_authentication(self.route, user)
 
 
 @pytest.mark.describe(f"GET Route: /{CONTROLLER}/get/<id>")
@@ -149,7 +155,7 @@ class TestGetUserById(TestBaseE2E):
         self, user: str, request: FixtureRequest
     ) -> None:
         user: LoginPayloadDto = request.getfixturevalue(user)
-        await self.different_required_authentication(self.route, user)
+        await self.get_different_required_authentication(self.route, user)
 
 
 @pytest.mark.describe(f"DELETE Route: /{CONTROLLER}/delete")
