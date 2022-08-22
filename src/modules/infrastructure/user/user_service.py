@@ -19,9 +19,7 @@ class UserService:
         self.user_repository = UserRepository()
 
     # ---------------------- PUBLIC METHODS ----------------------
-    async def create_user(
-        self, user_dto: CreateUserDto, db_session: Session
-    ) -> Optional[UserDto]:
+    async def create_user(self, user_dto: CreateUserDto, db_session: Session) -> Optional[UserDto]:
         user = await self.__verify_email_exist(user_dto.email, db_session)
 
         if user:
@@ -44,14 +42,18 @@ class UserService:
 
         return UserDto(**user.__dict__)
 
-    async def delete_user(
-        self, user_id: str, db_session: Session
-    ) -> Optional[UpdateResult]:
+    async def delete_user(self, user_id: str, db_session: Session) -> Optional[UpdateResult]:
         return await self.user_repository.soft_delete(user_id, db_session)
 
     async def update_user(
         self, user_id: str, update_user_dto: UpdateUserDto, db_session: Session
     ) -> Optional[UpdateResult]:
+        if update_user_dto.email:
+            user = await self.__verify_email_exist(update_user_dto.email, db_session)
+
+            if user:
+                raise BadRequestException(f"Email already in use.", ["User", "email"])
+
         return await self.user_repository.update(user_id, update_user_dto, db_session)
 
     # ---------------------- INTERFACE METHODS ----------------------
@@ -70,9 +72,5 @@ class UserService:
         )
 
     # ---------------------- PRIVATE METHODS ----------------------
-    async def __verify_email_exist(
-        self, email: str, db_session: Session
-    ) -> Optional[User]:
-        return await self.user_repository.find_one(
-            {"where": User.email == email}, db_session
-        )
+    async def __verify_email_exist(self, email: str, db_session: Session) -> Optional[User]:
+        return await self.user_repository.find_one({"where": User.email == email}, db_session)

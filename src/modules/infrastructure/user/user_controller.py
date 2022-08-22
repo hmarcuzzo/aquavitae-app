@@ -22,7 +22,10 @@ user_service = UserService()
 
 
 @user_router.post(
-    "/create", status_code=HTTP_201_CREATED, response_model=UserDto
+    "/create",
+    status_code=HTTP_201_CREATED,
+    response_model=UserDto,
+    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
 )
 async def create_user(
     request: CreateUserDto, database: Session = Depends(get_db)
@@ -40,24 +43,18 @@ async def get_all_users(database: Session = Depends(get_db)) -> Optional[List[Us
 @user_router.get(
     "/get/{id}", response_model=UserDto, dependencies=[Depends(Auth([UserRole.ADMIN]))]
 )
-async def get_user_by_id(
-    id: UUID, database: Session = Depends(get_db)
-) -> Optional[UserDto]:
+async def get_user_by_id(id: UUID, database: Session = Depends(get_db)) -> Optional[UserDto]:
     return await user_service.find_one_user(str(id), database)
 
 
-@user_router.delete(
-    "/delete", response_model=UpdateResult, dependencies=[Depends(Auth())]
-)
+@user_router.delete("/delete", response_model=UpdateResult, dependencies=[Depends(Auth())])
 async def delete_user(
     user: User = Depends(get_current_user), database: Session = Depends(get_db)
 ) -> Optional[UpdateResult]:
     return await user_service.delete_user(str(user.id), database)
 
 
-@user_router.patch(
-    "/update/", response_model=UpdateResult, dependencies=[Depends(Auth())]
-)
+@user_router.patch("/update", response_model=UpdateResult, dependencies=[Depends(Auth())])
 async def update_user(
     request: UpdateUserDto,
     user: User = Depends(get_current_user),
