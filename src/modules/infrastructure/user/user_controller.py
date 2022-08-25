@@ -9,7 +9,7 @@ from src.core.constants.enum.user_role import UserRole
 from src.core.decorators.http_decorator import Auth
 from src.core.types.update_result_type import UpdateResult
 from src.modules.infrastructure.database import get_db
-from .dto.create_user_dto import CreateUserDto
+from .dto.create_user_dto import CreateUserDto, CreateUserWithRoleDto
 from .dto.update_user_dto import UpdateUserDto
 from .dto.user_dto import UserDto
 from .entities.user_entity import User
@@ -31,6 +31,18 @@ async def create_user(
     request: CreateUserDto, database: Session = Depends(get_db)
 ) -> Optional[UserDto]:
     return await user_service.create_user(request, database)
+
+
+@user_router.post(
+    "/with-role/create",
+    status_code=HTTP_201_CREATED,
+    response_model=UserDto,
+    dependencies=[Depends(Auth([UserRole.ADMIN]))],
+)
+async def create_user_with_role(
+    request: CreateUserWithRoleDto, database: Session = Depends(get_db)
+) -> Optional[UserDto]:
+    return await user_service.create_user_with_role(request, database)
 
 
 @user_router.get(

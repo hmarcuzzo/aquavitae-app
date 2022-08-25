@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from src.core.types.exceptions_type import BadRequestException
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
-from .dto.create_user_dto import CreateUserDto
+from .dto.create_user_dto import CreateUserDto, CreateUserWithRoleDto
 from .dto.update_user_dto import UpdateUserDto
 from .dto.user_dto import UserDto
 from .entities.user_entity import User
@@ -26,6 +26,19 @@ class UserService:
             raise BadRequestException(f"Email already in use.", ["User", "email"])
 
         new_user = await self.user_repository.create(user_dto, db_session)
+
+        new_user = await self.user_repository.save(new_user, db_session)
+        return UserDto(**new_user.__dict__)
+
+    async def create_user_with_role(
+        self, user_role_dto: CreateUserWithRoleDto, db_session: Session
+    ) -> Optional[UserDto]:
+        user = await self.__verify_email_exist(user_role_dto.email, db_session)
+
+        if user:
+            raise BadRequestException(f"Email already in use.", ["User", "email"])
+
+        new_user = await self.user_repository.create(user_role_dto, db_session)
 
         new_user = await self.user_repository.save(new_user, db_session)
         return UserDto(**new_user.__dict__)

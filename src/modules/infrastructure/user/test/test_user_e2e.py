@@ -92,6 +92,61 @@ class TestCreateUser(TestBaseE2E):
         assert data["detail"][0]["loc"] == ["body", "email"]
 
 
+@pytest.mark.describe(f"POST Route: /{CONTROLLER}/with-role/create")
+class TestCreateUserWithRole(TestBaseE2E):
+    route = f"/{CONTROLLER}/with-role/create"
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Success: Create a new user with role in body")
+    async def test_create_new_user_with_role(self, user_admin: Optional[LoginPayloadDto]) -> None:
+        async with AsyncClient(app=app, base_url=self.base_url) as ac:
+            response = await ac.post(
+                self.route,
+                json={
+                    "email": "henrique_teste_role@gmail.com",
+                    "password": "12345678",
+                    "role": UserRole.NUTRITIONIST.value,
+                },
+                headers={"Authorization": f"Bearer {user_admin.access_token}"},
+            )
+
+        data = response.json()
+
+        assert response.status_code == HTTP_201_CREATED
+        assert [hasattr(data, attr_name) for attr_name in ["id", "email", "role"]]
+        assert data["email"] == "henrique_teste_role@gmail.com"
+        assert data["role"] == UserRole.NUTRITIONIST.value
+
+        user_dto = await user_service.find_one_user(data["id"], self.db_test_utils.db)
+
+        assert user_dto is not None
+        assert user_dto.email == data["email"]
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Failure: Create a user without required fields")
+    async def test_create_user_without_required_field(
+        self,
+        user_common: Optional[LoginPayloadDto],
+        user_nutritionist: Optional[LoginPayloadDto],
+        user_admin: Optional[LoginPayloadDto],
+    ) -> None:
+        async with AsyncClient(app=app, base_url=self.base_url) as ac:
+            response = await ac.post(
+                self.route,
+                json={
+                    "email": "henrique_teste_role@gmail.com",
+                    "password": "12345678",
+                },
+                headers={"Authorization": f"Bearer {user_admin.access_token}"},
+            )
+
+        data = response.json()
+
+        assert response.status_code == HTTP_422_UNPROCESSABLE_ENTITY
+        assert data["detail"][0]["msg"] == "field required"
+        assert data["detail"][0]["loc"] == ["body", "role"]
+
+
 @pytest.mark.describe(f"GET Route: /{CONTROLLER}/get")
 class TestGetAllUsers(TestBaseE2E):
     route = f"/{CONTROLLER}/get"
