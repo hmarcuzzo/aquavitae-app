@@ -79,6 +79,7 @@ python-dotenv = "*"
 black = "*"
 pycodestyle = "*"
 pytest-testdox = "*"
+pytest-cov = "*"
 
 [dev-packages]
 
