@@ -51,6 +51,11 @@ To build the project run the following commands in terminal, step by step:
     ```
     $ python src/main.py
     ```
+   
+5. Fill the database with initial data
+    ```
+    $ python src/core/scripts/initial_data.py
+    ```
   
 ## How to execute the tests
 1. In the **.env** file put your  ```APP_ENV=test ```
