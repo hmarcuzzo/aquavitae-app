@@ -69,7 +69,7 @@ class TestCreateActivityLevel(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a activity level without required authorization")
-    async def test_create_user_without_required_authorization(
+    async def test_create_activity_level_without_required_authorization(
         self, user_common: Optional[LoginPayloadDto], user_nutritionist: Optional[LoginPayloadDto]
     ) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
