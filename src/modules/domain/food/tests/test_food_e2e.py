@@ -241,13 +241,6 @@ class TestDeleteFood(TestBaseE2E):
 
         assert response.status_code == HTTP_404_NOT_FOUND
 
-    # @pytest.mark.asyncio
-    # @pytest.mark.it("Success: Check if all relation from food, was deleted")
-    # async def test_delete_food_category_relations(
-    #     self, user_admin: Optional[LoginPayloadDto], user_common: Optional[LoginPayloadDto]
-    # ) -> None:
-    #     food_item = self.db_test_utils.get_entity_objects(Food)[0]
-
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Delete food already deleted")
     async def test_delete_food_category_already_deleted(
