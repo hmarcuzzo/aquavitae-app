@@ -79,6 +79,20 @@ async def get_all_anthropometric_data_by_user_id(
     return await anthropometric_data_service.get_all_user_anthropometric_data(pagination, database)
 
 
+@anthropometric_data_router.get(
+    "/get/{anthropometric_data_id}",
+    response_model=AnthropometricDataDto,
+    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+)
+async def get_anthropometric_data_by_id(
+    anthropometric_data_id: UUID,
+    database: Session = Depends(get_db),
+) -> Optional[PaginationResponseDto[AnthropometricDataDto]]:
+    return await anthropometric_data_service.get_anthropometric_data_by_id(
+        str(anthropometric_data_id), database
+    )
+
+
 @anthropometric_data_router.patch(
     "/update/{anthropometric_data_id}",
     response_model=UpdateResult,

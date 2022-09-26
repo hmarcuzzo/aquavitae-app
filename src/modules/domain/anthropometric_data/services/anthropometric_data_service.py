@@ -85,6 +85,19 @@ class AnthropometricDataService:
             pagination["take"],
         )
 
+    async def get_anthropometric_data_by_id(
+        self, anthropometric_data_id: str, db: Session
+    ) -> Optional[AnthropometricDataDto]:
+        anthropometric_data = await self.anthropometric_data_repository.find_one_or_fail(
+            {
+                "where": AnthropometricData.id == anthropometric_data_id,
+                "relations": ["user"],
+            },
+            db,
+        )
+
+        return AnthropometricDataDto(**anthropometric_data.__dict__)
+
     async def user_update_anthropometric_data(
         self,
         user_id: str,
@@ -144,12 +157,17 @@ class AnthropometricDataService:
             "visceral_fat",
         ]:
             if (
-                anthropometric_data_dto.__dict__[key] is not None
+                key in anthropometric_data_dto.__dict__
+                and anthropometric_data_dto.__dict__[key] is not None
                 and anthropometric_data_dto.__dict__[key] < 0
             ):
                 raise BadRequestException(f"{key} must be greater than or equal to 0")
 
-        if anthropometric_data_dto.date is not None and anthropometric_data_dto.date > date.today():
+        if (
+            "date" in anthropometric_data_dto.__dict__
+            and anthropometric_data_dto.date is not None
+            and anthropometric_data_dto.date > date.today()
+        ):
             raise BadRequestException("Date must be less than or equal to today")
 
         return anthropometric_data_dto
