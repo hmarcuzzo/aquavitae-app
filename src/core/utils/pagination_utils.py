@@ -47,14 +47,15 @@ class PaginationUtils:
             for search_param in search:
                 search_param_split = search_param.split(":")
                 paging_params["search"].append(
-                    PaginationSearch(
-                        field=search_param_split[0], value=search_param_split[1]
-                    )
+                    PaginationSearch(field=search_param_split[0], value=search_param_split[1])
                 )
 
             if find_all_query and not PaginationUtils.validateSearchFilter(
                 paging_params["search"], find_all_query
             ):
+                raise BadRequestException("Invalid search filters")
+        else:
+            if find_all_query and not PaginationUtils.validateSearchFilter([], find_all_query):
                 raise BadRequestException("Invalid search filters")
 
         return paging_params
@@ -104,13 +105,26 @@ class PaginationUtils:
         return paging_data
 
     @staticmethod
-    def validateSearchFilter(
-        search: List[PaginationSearch], find_all_query_dto: T
-    ) -> bool:
+    def validateSearchFilter(search: List[PaginationSearch], find_all_query_dto: T) -> bool:
         find_all_query_dto_fields = find_all_query_dto.__fields__
+
+        if not PaginationUtils.validateRequiredSearchFilter(search, find_all_query_dto):
+            return False
 
         for search_param in search:
             if search_param["field"] not in find_all_query_dto_fields:
+                return False
+
+        return True
+
+    @staticmethod
+    def validateRequiredSearchFilter(search: List[PaginationSearch], find_all_query_dto: T) -> bool:
+        find_all_query_dto_fields = find_all_query_dto.__fields__
+
+        for field in find_all_query_dto_fields:
+            if find_all_query_dto_fields[field].required and field not in [
+                search_param["field"] for search_param in search
+            ]:
                 return False
 
         return True
