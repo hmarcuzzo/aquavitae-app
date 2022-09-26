@@ -19,6 +19,9 @@ class User(BaseEntity):
     personal_data = relationship(
         "PersonalData", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+    anthropometric_data = relationship(
+        "AnthropometricData", back_populates="user", uselist=True, cascade="all, delete-orphan"
+    )
 
     __table_args__ = (UniqueConstraint("email", "deleted_at", name="unique_user_email_active"),)
 

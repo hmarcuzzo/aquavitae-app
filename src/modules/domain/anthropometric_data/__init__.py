@@ -1,0 +1,2 @@
+from .entities.anthropometric_data_entity import AnthropometricData
+from .controllers.anthropometric_data_controller import anthropometric_data_router
