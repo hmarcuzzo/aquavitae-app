@@ -7,7 +7,6 @@ from sqlalchemy.exc import IntegrityError
 from starlette.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
-    HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_422_UNPROCESSABLE_ENTITY,
@@ -100,8 +99,8 @@ class TestCreatePersonalData(TestBaseE2E):
         assert data["detail"][0]["loc"] == ["body", "user"]
 
     @pytest.mark.asyncio
-    @pytest.mark.it("Failure: Create a activity level without required authorization")
-    async def test_create_user_without_required_authorization(
+    @pytest.mark.it("Failure: Create a personal data without required authorization")
+    async def test_create_personal_data_without_required_authorization(
         self, user_common: Optional[LoginPayloadDto], user_admin: Optional[LoginPayloadDto]
     ) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
@@ -124,7 +123,7 @@ class TestCreatePersonalData(TestBaseE2E):
 
 
 @pytest.mark.describe(f"GET Route: /{CONTROLLER}/me/get")
-class TestGetAllActivityLevel(TestBaseE2E):
+class TestGetUserPersonalData(TestBaseE2E):
     route = f"/{CONTROLLER}/me/get"
 
     @pytest.mark.asyncio
@@ -237,7 +236,7 @@ class TestUpdatePersonalData(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Update user without personal data")
-    async def test_no_required_authentication(
+    async def test_update_user_without_personal_data(
         self, user_admin: Optional[LoginPayloadDto], user_nutritionist: Optional[LoginPayloadDto]
     ) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:

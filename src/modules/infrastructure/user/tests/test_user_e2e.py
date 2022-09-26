@@ -13,6 +13,12 @@ from starlette.status import (
 
 from src.core.constants.enum.user_role import UserRole
 from src.main import app
+from src.modules.domain.anthropometric_data.entities.anthropometric_data_entity import (
+    AnthropometricData,
+)
+from src.modules.domain.anthropometric_data.services.anthropometric_data_service import (
+    AnthropometricDataService,
+)
 from src.modules.domain.personal_data.services.personal_data_service import PersonalDataService
 from src.modules.infrastructure.auth.dto.login_payload_dto import LoginPayloadDto
 from src.modules.infrastructure.user.user_service import UserService
@@ -258,6 +264,14 @@ class TestDeleteUser(TestBaseE2E):
             == 'Could not find any entity of type "PersonalData" that matches the criteria'
         )
         assert e_info.value.status_code == HTTP_404_NOT_FOUND
+
+        anthropometric_data_service = AnthropometricDataService()
+        response = await anthropometric_data_service.get_all_user_anthropometric_data(
+            {"where": AnthropometricData.user_id == user_common.user.id, "skip": 0, "take": 10},
+            self.db_test_utils.db,
+        )
+
+        assert response.count == 0
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Delete the same user twice")
