@@ -1,0 +1,2 @@
+from .entities.appointment_goal_entity import AppointmentGoal
+from .controllers.appointment_goal_controller import appointment_goal_router

@@ -87,7 +87,7 @@ async def get_all_anthropometric_data_by_user_id(
 async def get_anthropometric_data_by_id(
     anthropometric_data_id: UUID,
     database: Session = Depends(get_db),
-) -> Optional[PaginationResponseDto[AnthropometricDataDto]]:
+) -> Optional[AnthropometricDataDto]:
     return await anthropometric_data_service.get_anthropometric_data_by_id(
         str(anthropometric_data_id), database
     )
