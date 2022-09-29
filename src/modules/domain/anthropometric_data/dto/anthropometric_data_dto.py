@@ -18,7 +18,7 @@ class AnthropometricDataDto(BaseDto):
     body_water: Optional[confloat(ge=0)]
     basal_metabolism: Optional[conint(ge=0)]
     visceral_fat: Optional[conint(ge=0)]
-    date: Optional[date]
+    date: date
     user: Union[UserDto, UUID]
 
     def __init__(self, **kwargs):
