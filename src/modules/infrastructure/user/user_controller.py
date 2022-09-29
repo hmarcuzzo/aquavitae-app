@@ -5,13 +5,17 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_201_CREATED
 
+from src.core.common.dto.pagination_response_dto import PaginationResponseDto
 from src.core.constants.enum.user_role import UserRole
 from src.core.decorators.http_decorator import Auth
+from src.core.decorators.pagination_decorator import GetPagination
+from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.update_result_type import UpdateResult
 from src.modules.infrastructure.database import get_db
 from .dto.create_user_dto import CreateUserDto, CreateUserWithRoleDto
 from .dto.update_user_dto import UpdateUserDto
 from .dto.user_dto import UserDto
+from .dto.user_query_dto import FindAllUserQueryDto, OrderByUserQueryDto
 from .entities.user_entity import User
 from .user_service import UserService
 from ..auth.jwt_service import get_current_user
@@ -46,10 +50,17 @@ async def create_user_with_role(
 
 
 @user_router.get(
-    "/get", response_model=List[UserDto], dependencies=[Depends(Auth([UserRole.ADMIN]))]
+    "/get",
+    response_model=PaginationResponseDto[UserDto],
+    dependencies=[Depends(Auth([UserRole.ADMIN]))],
 )
-async def get_all_users(database: Session = Depends(get_db)) -> Optional[List[UserDto]]:
-    return await user_service.get_all_users(database)
+async def get_all_users(
+    pagination: FindManyOptions = Depends(
+        GetPagination(UserDto, FindAllUserQueryDto, OrderByUserQueryDto)
+    ),
+    database: Session = Depends(get_db),
+) -> Optional[PaginationResponseDto[UserDto]]:
+    return await user_service.get_all_users(pagination, database)
 
 
 @user_router.get(

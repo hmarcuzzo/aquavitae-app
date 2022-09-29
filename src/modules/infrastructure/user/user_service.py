@@ -4,7 +4,9 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from src.core.common.dto.pagination_response_dto import create_pagination_response_dto
 from src.core.types.exceptions_type import BadRequestException
+from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
 from .dto.create_user_dto import CreateUserDto, CreateUserWithRoleDto
@@ -43,10 +45,20 @@ class UserService:
         new_user = await self.user_repository.save(new_user, db_session)
         return UserDto(**new_user.__dict__)
 
-    async def get_all_users(self, db_session: Session) -> Optional[List[UserDto]]:
-        all_users = await self.user_repository.find(db=db_session)
+    async def get_all_users(
+        self, pagination: FindManyOptions, db_session: Session
+    ) -> Optional[List[UserDto]]:
+        [all_users, total] = await self.user_repository.find_and_count(
+            pagination,
+            db_session,
+        )
 
-        return [UserDto(**user.__dict__) for user in all_users]
+        return create_pagination_response_dto(
+            [UserDto(**user.__dict__) for user in all_users],
+            total,
+            pagination["skip"],
+            pagination["take"],
+        )
 
     async def find_one_user(
         self, find_data: Union[FindOneOptions, str], db_session: Session
