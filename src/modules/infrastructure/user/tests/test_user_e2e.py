@@ -169,7 +169,7 @@ class TestGetAllUsers(TestBaseE2E):
         data = response.json()
 
         assert response.status_code == HTTP_200_OK
-        assert len(data) >= 0
+        assert len(data["data"]) >= 0
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get a list of all users without authentication")

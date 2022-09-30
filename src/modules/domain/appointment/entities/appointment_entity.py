@@ -20,6 +20,13 @@ class Appointment(BaseEntity):
     )
     user = relationship("User", back_populates="appointments")
 
+    appointment_has_goals = relationship(
+        "AppointmentHasAppointmentGoal",
+        back_populates="appointment",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
+
     def __init__(
         self,
         date: Date,
