@@ -2,13 +2,12 @@ from datetime import datetime
 from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import Query, Session, subqueryload
 from sqlalchemy_utils import get_class_by_table, get_columns
 
 from src.core.types.delete_result_type import DeleteResult
-from src.core.types.exceptions_type import BadRequestException, NotFoundException
+from src.core.types.exceptions_type import NotFoundException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 from src.core.types.update_result_type import UpdateResult
@@ -119,13 +118,23 @@ class BaseRepository(Generic[T]):
             else:
                 if getattr(result, key):
                     column = DatabaseUtils.get_column_represent_deleted(get_columns(result_class))
-                    if getattr(getattr(result, key), column.description):
-                        setattr(result, key, None)
+                    if not isinstance(getattr(result, key), list):
+                        if getattr(getattr(result, key), column.description):
+                            setattr(result, key, None)
+                        else:
+                            new_result_key = await self.__remove_deleted_relations(
+                                db, getattr(result, key), options_dict
+                            )
+                            setattr(result, key, new_result_key)
                     else:
-                        new_result_key = await self.__remove_deleted_relations(
-                            db, getattr(result, key), options_dict
-                        )
-                        setattr(result, key, new_result_key)
+                        for index, element in enumerate(getattr(result, key)):
+                            if getattr(element, column.description):
+                                getattr(result, key)[index] = None
+                            else:
+                                new_result_key = await self.__remove_deleted_relations(
+                                    db, element, options_dict
+                                )
+                                getattr(result, key)[index] = new_result_key
 
         return result
 
