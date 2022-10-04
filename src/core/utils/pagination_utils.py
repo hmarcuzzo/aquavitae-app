@@ -42,21 +42,18 @@ class PaginationUtils:
             ):
                 raise BadRequestException("Invalid sort filters")
 
+        paging_params["search"] = []
         if search:
-            paging_params["search"] = []
             for search_param in search:
                 search_param_split = search_param.split(":")
                 paging_params["search"].append(
                     PaginationSearch(field=search_param_split[0], value=search_param_split[1])
                 )
 
-            if find_all_query and not PaginationUtils.validateSearchFilter(
-                paging_params["search"], find_all_query
-            ):
-                raise BadRequestException("Invalid search filters")
-        else:
-            if find_all_query and not PaginationUtils.validateSearchFilter([], find_all_query):
-                raise BadRequestException("Invalid search filters")
+        if find_all_query and not PaginationUtils.validateSearchFilter(
+            paging_params["search"], find_all_query
+        ):
+            raise BadRequestException("Invalid search filters")
 
         return paging_params
 
