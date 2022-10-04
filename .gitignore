@@ -108,4 +108,4 @@ pyvenv.cfg
 
 .idea/*
 
-./src/static/images/profile_photo/*
+/src/static/images/profile_photo/
