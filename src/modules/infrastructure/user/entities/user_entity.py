@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from sqlalchemy import Column, DateTime, Enum, event, String, UniqueConstraint
 from sqlalchemy.orm import relationship
-from sqlalchemy_utils import has_changes
+from sqlalchemy_utils import has_changes, URLType
 
 from src.core.constants.enum.user_role import UserRole
 from src.core.utils.hash_utils import generate_hash, validate_hash
@@ -15,6 +15,7 @@ class User(BaseEntity):
     password: str = Column(String(120), nullable=False)
     role: UserRole = Column(Enum(UserRole), nullable=False, default=UserRole.USER)
     last_access: DateTime = Column(DateTime(timezone=True), nullable=True)
+    profile_photo: URLType = Column(URLType, nullable=True)
 
     personal_data = relationship(
         "PersonalData", back_populates="user", uselist=False, cascade="all, delete-orphan"

@@ -1,4 +1,6 @@
-from pydantic import BaseModel, constr, EmailStr, Extra
+from typing import Optional
+
+from pydantic import BaseModel, constr, EmailStr, Extra, Field
 
 from src.core.constants.enum.user_role import UserRole
 
@@ -6,6 +8,7 @@ from src.core.constants.enum.user_role import UserRole
 class CreateUserDto(BaseModel):
     email: EmailStr
     password: constr(strip_whitespace=True)
+    profile_photo: Optional[bytes]
 
     class Config:
         extra = Extra.forbid

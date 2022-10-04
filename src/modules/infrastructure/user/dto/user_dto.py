@@ -9,6 +9,7 @@ class UserDto(BaseDto):
     email: str
     role: UserRole
     last_access: Optional[datetime]
+    profile_photo: Optional[bytes]
 
     class Config:
         orm_mode = True
