@@ -1,5 +1,8 @@
+import os
+import uuid
+from copy import deepcopy
 from datetime import date
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -11,6 +14,7 @@ from src.core.common.dto.pagination_response_dto import (
 from src.core.types.exceptions_type import BadRequestException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.update_result_type import UpdateResult
+from src.core.utils.image_utils import ImageUtils
 from src.modules.domain.anthropometric_data.dto.anthropometric_data_dto import AnthropometricDataDto
 from src.modules.domain.anthropometric_data.dto.create_anthropometric_data_dto import (
     CreateAnthropometricDataDto,
@@ -30,6 +34,7 @@ from src.modules.domain.anthropometric_data.repositories.anthropometric_data_rep
 class AnthropometricDataService:
     def __init__(self):
         self.anthropometric_data_repository = AnthropometricDataRepository()
+        self.image_utils = ImageUtils("/src/static/images/body_photo")
 
     # ---------------------- PUBLIC METHODS ----------------------
     async def create_anthropometric_data(
@@ -37,14 +42,41 @@ class AnthropometricDataService:
     ) -> Optional[AnthropometricDataDto]:
         anthropometric_data_dto = self.__verify_date_and_values(anthropometric_data_dto)
 
-        new_anthropometric_data = await self.anthropometric_data_repository.create(
-            anthropometric_data_dto, db
-        )
+        filename = None
+        try:
+            db.begin_nested()
 
-        new_anthropometric_data = await self.anthropometric_data_repository.save(
-            new_anthropometric_data, db
-        )
-        return AnthropometricDataDto(**new_anthropometric_data.__dict__)
+            image = self.image_utils.valid_image64(anthropometric_data_dto.body_photo)
+            delattr(anthropometric_data_dto, "body_photo")
+
+            new_anthropometric_data = AnthropometricData(
+                **anthropometric_data_dto.dict(exclude_unset=True)
+            )
+            new_anthropometric_data.id = uuid.uuid4()
+
+            filename = new_anthropometric_data.body_photo = self.image_utils.save_image(
+                str(new_anthropometric_data.id), image
+            )
+
+            new_anthropometric_data = await self.anthropometric_data_repository.create(
+                new_anthropometric_data, db
+            )
+            new_anthropometric_data = await self.anthropometric_data_repository.save(
+                new_anthropometric_data, db
+            )
+
+            new_anthropometric_data_dto = deepcopy(new_anthropometric_data)
+            new_anthropometric_data_dto.body_photo = self.image_utils.get_image(
+                new_anthropometric_data.body_photo
+            )
+            response = AnthropometricDataDto(**new_anthropometric_data_dto.__dict__)
+
+            db.commit()
+            return response
+        except Exception as e:
+            self.image_utils.delete_image(filename)
+            db.rollback()
+            raise e
 
     async def get_user_newest_anthropometric_data(
         self, user_id: str, db: Session
@@ -75,11 +107,17 @@ class AnthropometricDataService:
             db,
         )
 
-        return create_pagination_response_dto(
-            [
+        all_anthropometric_data_dto = []
+        for anthropometric_data in all_user_anthropometric_data:
+            anthropometric_data.body_photo = self.image_utils.get_image(
+                anthropometric_data.body_photo
+            )
+            all_anthropometric_data_dto.append(
                 AnthropometricDataDto(**anthropometric_data.__dict__)
-                for anthropometric_data in all_user_anthropometric_data
-            ],
+            )
+
+        return create_pagination_response_dto(
+            all_anthropometric_data_dto,
             total,
             pagination["skip"],
             pagination["take"],
@@ -96,6 +134,7 @@ class AnthropometricDataService:
             db,
         )
 
+        anthropometric_data.body_photo = self.image_utils.get_image(anthropometric_data.body_photo)
         return AnthropometricDataDto(**anthropometric_data.__dict__)
 
     async def user_update_anthropometric_data(
@@ -120,11 +159,40 @@ class AnthropometricDataService:
         db: Session,
     ) -> Optional[UpdateResult]:
         update_anthropometric_data_dto = self.__verify_values(update_anthropometric_data_dto)
-        return await self.anthropometric_data_repository.update(
-            {"where": AnthropometricData.id == anthropometric_data_id},
-            update_anthropometric_data_dto,
-            db,
-        )
+
+        try:
+            db.begin_nested()
+
+            if isinstance(update_anthropometric_data_dto, UpdateAnthropometricDataDto):
+                if "body_photo" in update_anthropometric_data_dto.dict(exclude_unset=True):
+                    image = self.image_utils.valid_image64(
+                        update_anthropometric_data_dto.body_photo
+                    )
+                delattr(update_anthropometric_data_dto, "body_photo")
+
+                anthropometric_data = await self.anthropometric_data_repository.find_one_or_fail(
+                    anthropometric_data_id, db
+                )
+                if "image" in locals():
+                    if image:
+                        anthropometric_data.body_photo = self.image_utils.save_image(
+                            str(anthropometric_data.id), image
+                        )
+                        update_anthropometric_data_dto.body_photo = (
+                            f"{anthropometric_data.id}.{image['format']}"
+                        )
+                    else:
+                        self.image_utils.delete_image(str(anthropometric_data.body_photo))
+                        update_anthropometric_data_dto.body_photo = None
+
+            response = await self.anthropometric_data_repository.update(
+                anthropometric_data_id, update_anthropometric_data_dto, db
+            )
+            db.commit()
+            return response
+        except Exception as e:
+            db.rollback()
+            raise e
 
     async def delete_anthropometric_data(
         self, anthropometric_data_id: str, db: Session

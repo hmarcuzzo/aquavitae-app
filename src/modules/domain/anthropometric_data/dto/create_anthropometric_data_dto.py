@@ -17,6 +17,7 @@ class CreateAnthropometricDataDto(BaseModel):
     visceral_fat: Optional[conint(ge=0)]
     date: Optional[date]
     user_id: UUID = Field(alias="user")
+    body_photo: Optional[bytes]
 
     class Config:
         extra = Extra.forbid

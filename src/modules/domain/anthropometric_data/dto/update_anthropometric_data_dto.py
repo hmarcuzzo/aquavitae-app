@@ -15,6 +15,7 @@ class UpdateAnthropometricDataDto(BaseModel):
     basal_metabolism: Optional[conint(ge=0)]
     visceral_fat: Optional[conint(ge=0)]
     date: Optional[date]
+    body_photo: Optional[bytes]
 
     class Config:
         extra = Extra.forbid

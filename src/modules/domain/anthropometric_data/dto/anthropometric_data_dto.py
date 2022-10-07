@@ -20,6 +20,7 @@ class AnthropometricDataDto(BaseDto):
     visceral_fat: Optional[conint(ge=0)]
     date: date
     user: Union[UserDto, UUID]
+    body_photo: Optional[bytes]
 
     def __init__(self, **kwargs):
         if "user" not in kwargs:

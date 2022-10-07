@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from sqlalchemy import Column, Date, Float, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy_utils import URLType
 
 from src.modules.infrastructure.database.base_entity import BaseEntity
 
@@ -19,6 +20,7 @@ class AnthropometricData(BaseEntity):
     basal_metabolism: Integer = Column(Integer, nullable=True)
     visceral_fat: Integer = Column(Integer, nullable=True)
     date: Date = Column(Date, nullable=False)
+    body_photo: URLType = Column(URLType, nullable=True)
 
     user_id: UUID = Column(
         UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"), nullable=False
@@ -38,6 +40,7 @@ class AnthropometricData(BaseEntity):
         body_water: Float = None,
         basal_metabolism: Integer = None,
         visceral_fat: Integer = None,
+        body_photo: URLType = None,
         *args,
         **kwargs
     ):
@@ -53,3 +56,4 @@ class AnthropometricData(BaseEntity):
         self.visceral_fat = visceral_fat
         self.date = date
         self.user_id = user_id
+        self.body_photo = body_photo
