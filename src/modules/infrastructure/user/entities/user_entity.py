@@ -29,11 +29,20 @@ class User(BaseEntity):
 
     __table_args__ = (UniqueConstraint("email", "deleted_at", name="unique_user_email_active"),)
 
-    def __init__(self, email: str, password: str, role: UserRole = UserRole.USER, *args, **kwargs):
+    def __init__(
+        self,
+        email: str,
+        password: str,
+        role: UserRole = UserRole.USER,
+        profile_photo: URLType = None,
+        *args,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.email = email
         self.password = password
         self.role = role
+        self.profile_photo = profile_photo
 
     def check_password(self, password: str) -> bool:
         return validate_hash(password, self.password)

@@ -129,7 +129,7 @@ class BaseRepository(Generic[T]):
                     else:
                         for index, element in enumerate(getattr(result, key)):
                             if getattr(element, column.description):
-                                getattr(result, key)[index] = None
+                                del getattr(result, key)[index]
                             else:
                                 new_result_key = await self.__remove_deleted_relations(
                                     db, element, options_dict

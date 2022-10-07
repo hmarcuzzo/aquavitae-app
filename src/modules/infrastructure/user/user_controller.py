@@ -46,7 +46,7 @@ async def create_user(
 async def create_user_with_role(
     request: CreateUserWithRoleDto, database: Session = Depends(get_db)
 ) -> Optional[UserDto]:
-    return await user_service.create_user_with_role(request, database)
+    return await user_service.create_user(request, database)
 
 
 @user_router.get(

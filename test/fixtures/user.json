@@ -7,7 +7,8 @@
     "email": "henrique_user@gmail.com",
     "password": "$argon2id$v=19$m=102400,t=2,p=8$LAWgtPZea+2ds1bKWYuxNg$5X1xey9Cap8KGB9a+nbMaA",
     "role": "USER",
-    "last_access": null
+    "last_access": null,
+    "profile_photo": null
   },
   {
     "id": "4fbc9c6a-8103-417b-9e76-2856d247b694",
@@ -17,7 +18,8 @@
     "email": "henrique_nutri@gmail.com",
     "password": "$argon2id$v=19$m=102400,t=2,p=8$Tcl5L2UsJUToHeMcI6S09g$t5dXx9kyBNEFoXq+4hPrmA",
     "role": "NUTRITIONIST",
-    "last_access": null
+    "last_access": null,
+    "profile_photo": null
   },
   {
     "id": "09cdf815-9cda-4a87-8ae9-34c06f915278",
@@ -27,6 +29,7 @@
     "email": "henrique_admin@gmail.com",
     "password": "$argon2id$v=19$m=102400,t=2,p=8$Tcl5L2UsJUToHeMcI6S09g$t5dXx9kyBNEFoXq+4hPrmA",
     "role": "ADMIN",
-    "last_access": null
+    "last_access": null,
+    "profile_photo": null
   }
 ]

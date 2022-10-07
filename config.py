@@ -11,6 +11,8 @@ APP_PORT = int(os.getenv("APP_PORT"))
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS").split(",")
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # --------------- DEFAULT TEST CONFIGURATIONS --------------- #
 TEST_DATABASE_NAME = os.getenv("TEST_DATABASE_NAME")
 
