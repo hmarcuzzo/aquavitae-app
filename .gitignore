@@ -107,6 +107,3 @@ pyvenv.cfg
 .mypy_cache/
 
 .idea/*
-
-/src/static/images/profile_photo/*
-/src/static/images/body_photo/*
