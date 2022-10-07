@@ -9,9 +9,6 @@ class DetailResponseDto(BaseModel):
     msg: str = Field(title="Message")
     type: str = Field(title="Error Type")
 
-    class Config:
-        extra = Extra.forbid
-
 
 class ExceptionResponseDto(BaseModel):
     detail: List[DetailResponseDto]

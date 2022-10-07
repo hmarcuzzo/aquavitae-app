@@ -1,0 +1,19 @@
+[
+  {
+  "id": "5bdf30ba-19cc-4954-8b98-c53aacd2793d",
+  "created_at": "2022-09-23 15:55:00.518317 +00:00",
+  "updated_at": "2022-09-23 15:55:00.518317 +00:00",
+  "deleted_at": null,
+  "weight": 165,
+  "height": 75,
+  "waist_circumference": null,
+  "fat_mass": null,
+  "muscle_mass": null,
+  "bone_mass": null,
+  "body_water": null,
+  "basal_metabolism": null,
+  "visceral_fat": null,
+  "date": "2022-09-23",
+  "user_id": "3e535e14-d26c-4dc8-ae28-096ff05453fb"
+  }
+]

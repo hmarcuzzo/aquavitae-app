@@ -29,7 +29,7 @@ def upgrade():
         sa.Column("password", sa.String(length=120), nullable=False),
         sa.Column(
             "role",
-            sa.Enum("ADMIN", "NUTRICIONIST", "USER", name="userrole"),
+            sa.Enum("ADMIN", "NUTRITIONIST", "USER", name="user_role"),
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),

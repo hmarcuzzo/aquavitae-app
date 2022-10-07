@@ -8,7 +8,9 @@ from starlette.status import HTTP_201_CREATED
 from src.core.constants.enum.user_role import UserRole
 from src.core.decorators.http_decorator import Auth
 from src.core.types.update_result_type import UpdateResult
-from src.modules.domain.personal_data.dto.personal_data.create_personal_data_dto import CreatePersonalDataDto
+from src.modules.domain.personal_data.dto.personal_data.create_personal_data_dto import (
+    CreatePersonalDataDto,
+)
 from src.modules.domain.personal_data.dto.personal_data.personal_data_dto import PersonalDataDto
 from src.modules.domain.personal_data.dto.personal_data.update_personal_data_dto import (
     UpdatePersonalDataDto,
@@ -27,7 +29,7 @@ personal_data_service = PersonalDataService()
     "/create",
     status_code=HTTP_201_CREATED,
     response_model=PersonalDataDto,
-    dependencies=[Depends(Auth([UserRole.NUTRICIONIST]))],
+    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
 )
 async def create_personal_data(
     request: CreatePersonalDataDto, database: Session = Depends(get_db)
@@ -49,7 +51,7 @@ async def get_user_personal_data(
 @personal_data_router.get(
     "/get/{user_id}",
     response_model=PersonalDataDto,
-    dependencies=[Depends(Auth([UserRole.NUTRICIONIST]))],
+    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
 )
 async def get_personal_data_by_id(
     user_id: UUID, database: Session = Depends(get_db)
@@ -60,7 +62,7 @@ async def get_personal_data_by_id(
 @personal_data_router.patch(
     "/update/{user_id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.NUTRICIONIST]))],
+    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
 )
 async def update_personal_data(
     user_id: UUID,

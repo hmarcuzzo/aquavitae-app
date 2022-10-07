@@ -118,13 +118,23 @@ class BaseRepository(Generic[T]):
             else:
                 if getattr(result, key):
                     column = DatabaseUtils.get_column_represent_deleted(get_columns(result_class))
-                    if getattr(getattr(result, key), column.description):
-                        setattr(result, key, None)
+                    if not isinstance(getattr(result, key), list):
+                        if getattr(getattr(result, key), column.description):
+                            setattr(result, key, None)
+                        else:
+                            new_result_key = await self.__remove_deleted_relations(
+                                db, getattr(result, key), options_dict
+                            )
+                            setattr(result, key, new_result_key)
                     else:
-                        new_result_key = await self.__remove_deleted_relations(
-                            db, getattr(result, key), options_dict
-                        )
-                        setattr(result, key, new_result_key)
+                        for index, element in enumerate(getattr(result, key)):
+                            if getattr(element, column.description):
+                                del getattr(result, key)[index]
+                            else:
+                                new_result_key = await self.__remove_deleted_relations(
+                                    db, element, options_dict
+                                )
+                                getattr(result, key)[index] = new_result_key
 
         return result
 

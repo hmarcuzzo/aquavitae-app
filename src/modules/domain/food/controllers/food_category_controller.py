@@ -35,7 +35,7 @@ food_category_service = FoodCategoryService()
     "/create",
     status_code=HTTP_201_CREATED,
     response_model=FoodCategoryDto,
-    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def create_food_categy(
     request: CreateFoodCategoryDto, database: Session = Depends(get_db)
@@ -46,25 +46,21 @@ async def create_food_categy(
 @food_category_router.get(
     "/get",
     response_model=PaginationResponseDto[FoodCategoryDto],
-    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_all_food_category_paginated(
     pagination: FindManyOptions = Depends(
-        GetPagination(
-            FoodCategory, FindAllFoodCategoryQueryDto, OrderByFoodCategoryQueryDto
-        )
+        GetPagination(FoodCategory, FindAllFoodCategoryQueryDto, OrderByFoodCategoryQueryDto)
     ),
     database: Session = Depends(get_db),
 ) -> Optional[PaginationResponseDto[FoodCategoryDto]]:
-    return await food_category_service.get_all_food_category_paginated(
-        pagination, database
-    )
+    return await food_category_service.get_all_food_category_paginated(pagination, database)
 
 
 @food_category_router.get(
     "/get/{id}",
     response_model=FoodCategoryDto,
-    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_food_category_by_id(
     id: UUID, database: Session = Depends(get_db)
@@ -75,7 +71,7 @@ async def get_food_category_by_id(
 @food_category_router.patch(
     "/update/{id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def update_food_category(
     request: UpdateFoodCategoryDto, id: UUID, database: Session = Depends(get_db)
@@ -86,7 +82,7 @@ async def update_food_category(
 @food_category_router.delete(
     "/delete/{id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRICIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def delete_food_category(
     id: UUID, database: Session = Depends(get_db)
