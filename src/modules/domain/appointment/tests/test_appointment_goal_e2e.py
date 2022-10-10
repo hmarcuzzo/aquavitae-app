@@ -1,4 +1,3 @@
-from datetime import date
 from typing import Optional
 
 import pytest
@@ -7,7 +6,6 @@ from httpx import AsyncClient
 from starlette.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
-    HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
@@ -82,7 +80,7 @@ class TestCreateAppointmentGoal(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a appointment goal without authorization")
-    async def test_create_appointment_goal_without_required_authorization(self) -> None:
+    async def test_create_appointment_goal_without_authorization(self) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             assert (
                 await ac.post(
@@ -99,8 +97,8 @@ class TestGetAllAppointmentGoal(TestBaseE2E):
     route = f"/{CONTROLLER}/get"
 
     @pytest.mark.asyncio
-    @pytest.mark.it("Success: Get appointment goal")
-    async def test_get_all_appointment_goal_(
+    @pytest.mark.it("Success: Get all appointment goal")
+    async def test_get_all_appointment_goal(
         self, user_nutritionist: Optional[LoginPayloadDto]
     ) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
@@ -140,11 +138,11 @@ class TestGetAllAppointmentGoal(TestBaseE2E):
 
 
 @pytest.mark.describe(f"GET Route: /{CONTROLLER}/get/<appointment_goal_id>")
-class TestGetAppointmentGoalId(TestBaseE2E):
+class TestGetAppointmentGoalById(TestBaseE2E):
     route = f"/{CONTROLLER}/get/"
 
     @pytest.mark.asyncio
-    @pytest.mark.it("Success: Get appointment goal id")
+    @pytest.mark.it("Success: Get appointment goal by id")
     async def test_get_appointment_goal_by_id(
         self, user_nutritionist: Optional[LoginPayloadDto]
     ) -> None:
