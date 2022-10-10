@@ -27,6 +27,13 @@ class Appointment(BaseEntity):
         cascade="all, delete-orphan",
     )
 
+    biochemical_data = relationship(
+        "BiochemicalData",
+        back_populates="appointment",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
     def __init__(
         self,
         date: Date,
