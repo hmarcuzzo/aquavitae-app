@@ -23,6 +23,10 @@ class Food(BaseEntity):
     )
     food_category = relationship("FoodCategory", back_populates="foods")
 
+    specificities = relationship(
+        "Specificity", back_populates="food", uselist=True, cascade="all, delete-orphan"
+    )
+
     def __init__(
         self,
         description: String(255),
