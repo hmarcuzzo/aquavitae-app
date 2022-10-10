@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Union
+from typing import List, Optional, Union
 from uuid import UUID
 
 from src.core.common.dto.base_dto import BaseDto
@@ -14,7 +14,7 @@ class AppointmentDto(BaseDto):
     date: date
     status: AppointmentStatus
     user: Union[UserDto, UUID]
-    appointment_goals: Union[List[AppointmentGoalDto], List[UUID]] = []
+    appointment_goals: Optional[Union[List[AppointmentGoalDto], List[UUID]]]
 
     def __init__(self, **kwargs):
         kwargs["appointment_goals"] = (
