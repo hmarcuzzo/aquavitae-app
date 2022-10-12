@@ -29,7 +29,10 @@ class BiochemicalData(BaseEntity):
     ygt: Float(2) = Column(Float(2), nullable=True)
 
     appointment_id: UUID = Column(
-        UUID(as_uuid=True), ForeignKey("appointment.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("appointment.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
     )
     appointment = relationship("Appointment", back_populates="biochemical_data")
 
