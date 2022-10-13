@@ -26,6 +26,15 @@ class User(BaseEntity):
     appointments = relationship(
         "Appointment", back_populates="user", uselist=True, cascade="all, delete-orphan"
     )
+    antecedents = relationship(
+        "Antecedent", back_populates="user", uselist=True, cascade="all, delete-orphan"
+    )
+    diagnosis = relationship(
+        "Diagnosis", back_populates="user", uselist=True, cascade="all, delete-orphan"
+    )
+    specificities = relationship(
+        "Specificity", back_populates="user", uselist=True, cascade="all, delete-orphan"
+    )
 
     __table_args__ = (UniqueConstraint("email", "deleted_at", name="unique_user_email_active"),)
 
