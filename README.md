@@ -1,7 +1,6 @@
 <h1 align="center">
 <br>
-    <img src="https://images.vexels.com/media/users/3/145368/isolated/preview/2966d7176c1dd81b5d15c1e8a602173a-waterdrop-arredondado-vislumbre-golpe.png" 
-        alt="Markdownify" width="200">
+    <img src="./src/static/images/thumbnail_AquaeVitae_Logo.png" width="350">
 <br>
     Aquavitae App
 <br>
