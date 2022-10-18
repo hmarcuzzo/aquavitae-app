@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from sqlalchemy import Column, Float, ForeignKey, Integer, String
+from sqlalchemy import Column, Float, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm import relationship
 
 from src.modules.infrastructure.database.base_entity import BaseEntity
 

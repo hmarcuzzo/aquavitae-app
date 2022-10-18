@@ -1,22 +1,23 @@
 from dataclasses import dataclass
 
-from sqlalchemy import Column, Float, String
+from sqlalchemy import Column, Float, ForeignKey, String
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from src.modules.infrastructure.database.base_entity import BaseEntity
 
 
 @dataclass
-class TypeOfMeal(BaseEntity):
-    description: String = Column(String(255), nullable=False)
-    calories_percentage: Float = Column(Float, nullable=True, default=0)
-    lipids_percentage: Float = Column(Float, nullable=True, default=0)
-    proteins_percentage: Float = Column(Float, nullable=True, default=0)
-    carbohydrates_percentage: Float = Column(Float, nullable=True, default=0)
-
-    foods = relationship(
-        "FoodCanEatAt", back_populates="type_of_meal", uselist=True, cascade="all, delete-orphan"
+class FoodCanEatAt(BaseEntity):
+    type_of_meal_id: UUID = Column(
+        UUID(as_uuid=True), ForeignKey("type_of_meal.id", ondelete="CASCADE"), nullable=False
     )
+    type_of_meal = relationship("TypeOfMeal", back_populates="foods")
+
+    food_id: UUID = Column(
+        UUID(as_uuid=True), ForeignKey("food.id", ondelete="CASCADE"), nullable=False
+    )
+    food = relationship("Food", back_populates="can_eat_at")
 
     def __init__(
         self,
