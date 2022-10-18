@@ -21,17 +21,11 @@ class FoodCanEatAt(BaseEntity):
 
     def __init__(
         self,
-        description: String(255),
-        calories_percentage: Float,
-        lipids_percentage: Float,
-        proteins_percentage: Float,
-        carbohydrates_percentage: Float,
+        type_of_meal_id: UUID,
+        food_id: UUID,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.description = description
-        self.calories_percentage = calories_percentage
-        self.lipids_percentage = lipids_percentage
-        self.proteins_percentage = proteins_percentage
-        self.carbohydrates_percentage = carbohydrates_percentage
+        self.type_of_meal_id = type_of_meal_id
+        self.food_id = food_id
