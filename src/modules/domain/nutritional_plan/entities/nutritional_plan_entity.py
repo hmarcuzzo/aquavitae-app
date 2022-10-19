@@ -20,7 +20,14 @@ class NutritionalPlan(BaseEntity):
     user_id: UUID = Column(
         UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"), nullable=False
     )
-    user = relationship("User", back_populates="personal_data")
+    user = relationship("User", back_populates="nutritional_plans")
+
+    forbidden_foods = relationship(
+        "ForbiddenFoods",
+        back_populates="nutritional_plan",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
 
     def __init__(
         self,
