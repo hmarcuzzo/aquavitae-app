@@ -7,12 +7,13 @@ from .appointment import appointment_entities, appointment_routers
 from .biochemical_data import biochemical_data_entities, biochemical_data_routers
 from .diagnosis import diagnosis_entities, diagnosis_routers
 from .food import food_entities, food_routers
+from .forbidden_foods import forbidden_foods_entities, forbidden_foods_routers
 from .item import item_entities, item_routers
 from .meal import meal_entities, meal_routers
-from .personal_data import personal_data_entities, personal_data_routers
-from .specificity import specificity_entities, specificity_routers
 from .nutritional_plan import nutritional_plan_entities, nutritional_plan_routers
-from .forbidden_foods import forbidden_foods_entities, forbidden_foods_routers
+from .personal_data import personal_data_entities, personal_data_routers
+from .plan_meals import plan_meals_entities, plan_meals_routers
+from .specificity import specificity_entities, specificity_routers
 
 domain_routers = APIRouter()
 
@@ -29,6 +30,7 @@ domain_routers.include_router(item_routers)
 domain_routers.include_router(meal_routers)
 domain_routers.include_router(nutritional_plan_routers)
 domain_routers.include_router(forbidden_foods_routers)
+domain_routers.include_router(plan_meals_routers)
 
 # Include Domain Entities
 domain_entities = (
@@ -44,4 +46,5 @@ domain_entities = (
     + meal_entities
     + nutritional_plan_entities
     + forbidden_foods_entities
+    + plan_meals_entities
 )

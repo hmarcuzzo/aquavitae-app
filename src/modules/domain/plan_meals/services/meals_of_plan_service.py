@@ -1,4 +1,6 @@
-from src.modules.domain.meal.repositories.meals_of_plan_repository import MealsOfPlanRepository
+from src.modules.domain.plan_meals.repositories.meals_of_plan_repository import (
+    MealsOfPlanRepository,
+)
 
 
 class MealsOfPlanService:
