@@ -20,23 +20,7 @@ class ForbiddenFoods(BaseEntity):
     )
     nutritional_plan = relationship("NutritionalPlan", back_populates="forbidden_foods")
 
-    def __init__(
-        self,
-        calories_limit: Integer,
-        lipids_limit: Integer,
-        proteins_limit: Integer,
-        carbohydrates_limit: Integer,
-        period_limit: Periods,
-        active: Boolean,
-        user_id: UUID,
-        *args,
-        **kwargs
-    ):
+    def __init__(self, food_id: UUID, nutritional_plan_id: UUID, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.calories_limit = calories_limit
-        self.lipids_limit = lipids_limit
-        self.proteins_limit = proteins_limit
-        self.carbohydrates_limit = carbohydrates_limit
-        self.period_limit = period_limit
-        self.active = active
-        self.user_id = user_id
+        self.food_id = food_id
+        self.nutritional_plan_id = nutritional_plan_id
