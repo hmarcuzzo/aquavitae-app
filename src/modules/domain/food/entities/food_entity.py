@@ -29,6 +29,9 @@ class Food(BaseEntity):
     items = relationship(
         "ItemHasFood", back_populates="food", uselist=True, cascade="all, delete-orphan"
     )
+    forbidden_in_nutritional_plans = relationship(
+        "ForbiddenFoods", back_populates="food", uselist=True, cascade="all, delete-orphan"
+    )
 
     def __init__(
         self,
