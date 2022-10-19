@@ -17,6 +17,9 @@ class TypeOfMeal(BaseEntity):
     foods = relationship(
         "FoodCanEatAt", back_populates="type_of_meal", uselist=True, cascade="all, delete-orphan"
     )
+    meals_of_plan = relationship(
+        "MealsOfPlan", back_populates="type_of_meal", uselist=True, cascade="all, delete-orphan"
+    )
 
     def __init__(
         self,
