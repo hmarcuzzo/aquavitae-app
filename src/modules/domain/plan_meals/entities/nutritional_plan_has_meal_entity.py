@@ -27,6 +27,12 @@ class NutritionalPlanHasMeal(BaseEntity):
         uselist=True,
         cascade="all, delete-orphan",
     )
+    diary_meals = relationship(
+        "Diary",
+        back_populates="nutritional_plan_has_meal",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
 
     def __init__(
         self,
