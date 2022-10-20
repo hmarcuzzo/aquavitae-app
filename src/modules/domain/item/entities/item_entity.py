@@ -14,6 +14,9 @@ class Item(BaseEntity):
     foods = relationship(
         "ItemHasFood", back_populates="item", uselist=True, cascade="all, delete-orphan"
     )
+    meals_options = relationship(
+        "MealsOptions", back_populates="item", uselist=True, cascade="all, delete-orphan"
+    )
 
     def __init__(self, description: String(255), *args, **kwargs):
         super().__init__(*args, **kwargs)

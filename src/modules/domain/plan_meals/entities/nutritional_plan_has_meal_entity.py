@@ -21,6 +21,13 @@ class NutritionalPlanHasMeal(BaseEntity):
     )
     meals_of_plan = relationship("MealsOfPlan", back_populates="nutritional_plan_meals")
 
+    meals_options = relationship(
+        "MealsOptions",
+        back_populates="nutritional_plan_has_meal",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
+
     def __init__(
         self,
         meal_date: Date,
