@@ -24,6 +24,7 @@ from src.modules.domain.appointment.dto.appointment_goal.create_appointment_goal
 from src.modules.domain.appointment.dto.appointment_goal.update_appointment_goal_dto import (
     UpdateAppointmentGoalDto,
 )
+from src.modules.domain.appointment.entities.appointment_goal_entity import AppointmentGoal
 from src.modules.domain.appointment.services.appointment_goal_service import AppointmentGoalService
 from src.modules.infrastructure.database import get_db
 
@@ -52,7 +53,7 @@ async def create_appointment_goal(
 async def get_all_appointment_goal(
     pagination: FindManyOptions = Depends(
         GetPagination(
-            AppointmentGoalDto, FindAllAppointmentGoalQueryDto, OrderByAppointmentGoalQueryDto
+            AppointmentGoal, FindAllAppointmentGoalQueryDto, OrderByAppointmentGoalQueryDto
         )
     ),
     database: Session = Depends(get_db),
