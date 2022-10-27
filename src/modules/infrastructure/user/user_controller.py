@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -56,7 +56,7 @@ async def create_user_with_role(
 )
 async def get_all_users(
     pagination: FindManyOptions = Depends(
-        GetPagination(UserDto, FindAllUserQueryDto, OrderByUserQueryDto)
+        GetPagination(User, FindAllUserQueryDto, OrderByUserQueryDto)
     ),
     database: Session = Depends(get_db),
 ) -> Optional[PaginationResponseDto[UserDto]]:

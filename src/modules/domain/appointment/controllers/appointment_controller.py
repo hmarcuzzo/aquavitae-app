@@ -22,6 +22,7 @@ from src.modules.domain.appointment.dto.appointment.create_appointment_dto impor
 from src.modules.domain.appointment.dto.appointment.update_appointment_dto import (
     UpdateAppointmentDto,
 )
+from src.modules.domain.appointment.entities.appointment_entity import Appointment
 from src.modules.domain.appointment.services.appointment_service import AppointmentService
 from src.modules.infrastructure.database import get_db
 
@@ -49,7 +50,7 @@ async def create_appointment_goal(
 )
 async def get_all_appointments(
     pagination: FindManyOptions = Depends(
-        GetPagination(AppointmentDto, FindAllAppointmentQueryDto, OrderByAppointmentQueryDto)
+        GetPagination(Appointment, FindAllAppointmentQueryDto, OrderByAppointmentQueryDto)
     ),
     database: Session = Depends(get_db),
 ) -> Optional[PaginationResponseDto[AppointmentDto]]:
