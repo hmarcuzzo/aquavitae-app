@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import List, Optional
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from src.core.types.update_result_type import UpdateResult
@@ -39,6 +40,22 @@ class PersonalDataService:
         )
 
         return PersonalDataDto(**personal_data.__dict__)
+
+    async def find_several_personal_data_by_id(
+        self, users_id: List[str], db: Session
+    ) -> Optional[List[PersonalDataDto]]:
+        users_personal_data = await self.personal_data_repository.find(
+            {
+                "where": or_(*[PersonalData.user_id == user_id for user_id in users_id]),
+                "relations": ["activity_level", "user"],
+            },
+            db,
+        )
+
+        return [
+            PersonalDataDto(**user_personal_data.__dict__)
+            for user_personal_data in users_personal_data
+        ]
 
     async def update_personal_data(
         self,

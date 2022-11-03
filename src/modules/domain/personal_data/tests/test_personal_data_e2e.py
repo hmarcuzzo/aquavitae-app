@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 from _pytest.fixtures import FixtureRequest
-from httpx import AsyncClient
+from httpx import AsyncClient, QueryParams
 from sqlalchemy.exc import IntegrityError
 from starlette.status import (
     HTTP_200_OK,
@@ -182,7 +182,7 @@ class TestGetPersonalDataByUserId(TestBaseE2E):
         await self.get_no_authentication((self.route + f"{user_common.user.id}"))
 
     @pytest.mark.asyncio
-    @pytest.mark.it("Failure: Get one activity level with non required authentication")
+    @pytest.mark.it("Failure: Get one personal data with non required authentication")
     @pytest.mark.parametrize("user", ["user_common", "user_admin"])
     async def test_different_required_authentication(
         self, user: str, user_common: Optional[LoginPayloadDto], request: FixtureRequest
@@ -191,6 +191,65 @@ class TestGetPersonalDataByUserId(TestBaseE2E):
         await self.get_different_required_authentication(
             (self.route + f"{user_common.user.id}"), user
         )
+
+
+@pytest.mark.describe(f"GET Route: /{CONTROLLER}/users/get/")
+class TestGetSeveralPersonalDataByUserId(TestBaseE2E):
+    route = f"/{CONTROLLER}/users/get/"
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Success: Get one personal data by user id")
+    async def test_get_one_personal_data_by_user_id(
+        self, user_nutritionist: Optional[LoginPayloadDto], user_common: Optional[LoginPayloadDto]
+    ) -> None:
+        async with AsyncClient(app=app, base_url=self.base_url) as ac:
+            response = await ac.get(
+                self.route,
+                params=[("users_id", user_common.user.id)],
+                headers={"Authorization": f"Bearer {user_nutritionist.access_token}"},
+            )
+
+        data = response.json()
+
+        assert response.status_code == HTTP_200_OK
+        assert isinstance(data, list)
+        assert data[0]["user"]["id"] == str(user_common.user.id)
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Success: Get several personal data by user id")
+    async def test_get_several_personal_data_by_user_id(
+        self, user_nutritionist: Optional[LoginPayloadDto], user_common: Optional[LoginPayloadDto]
+    ) -> None:
+        async with AsyncClient(app=app, base_url=self.base_url) as ac:
+            response = await ac.get(
+                self.route,
+                params=[
+                    ("users_id", user_common.user.id),
+                    ("users_id", "5fbffb2b-531c-4f79-9f76-4f44e2a1dc21"),
+                ],
+                headers={"Authorization": f"Bearer {user_nutritionist.access_token}"},
+            )
+
+        data = response.json()
+
+        assert response.status_code == HTTP_200_OK
+        assert isinstance(data, list)
+        assert len(data) == 2
+        assert data[1]["user"]["id"] == "5fbffb2b-531c-4f79-9f76-4f44e2a1dc21"
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Failure: Get several personal data without authentication")
+    async def test_no_authentication(self, user_admin: Optional[LoginPayloadDto]) -> None:
+        await self.get_no_authentication(self.route)
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Failure: Get several personal data with non required authentication")
+    @pytest.mark.parametrize("user", ["user_common", "user_admin"])
+    async def test_different_required_authentication(
+        self, user: str, user_common: Optional[LoginPayloadDto], request: FixtureRequest
+    ) -> None:
+        user: LoginPayloadDto = request.getfixturevalue(user)
+        await self.get_different_required_authentication(self.route, user)
 
 
 @pytest.mark.describe(f"PATCH Route: /{CONTROLLER}/update/<user_id>")
