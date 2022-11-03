@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import List, Optional, Union
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_201_CREATED
 
@@ -57,6 +57,19 @@ async def get_personal_data_by_id(
     user_id: UUID, database: Session = Depends(get_db)
 ) -> Optional[PersonalDataDto]:
     return await personal_data_service.find_one_personal_data(str(user_id), database)
+
+
+@personal_data_router.get(
+    "/users/get/",
+    response_model=List[PersonalDataDto],
+    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+)
+async def get_several_personal_data_by_user_id(
+    users_id: Union[List[UUID], None] = Query(default=None), database: Session = Depends(get_db)
+) -> Optional[PersonalDataDto]:
+    return await personal_data_service.find_several_personal_data_by_id(
+        [str(user_id) for user_id in users_id], database
+    )
 
 
 @personal_data_router.patch(
