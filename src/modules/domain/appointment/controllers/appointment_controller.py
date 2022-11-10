@@ -35,7 +35,7 @@ appointment_service = AppointmentService()
     "/create",
     status_code=HTTP_201_CREATED,
     response_model=AppointmentDto,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def create_appointment_goal(
     request: CreateAppointmentDto, database: Session = Depends(get_db)
@@ -46,7 +46,7 @@ async def create_appointment_goal(
 @appointment_router.get(
     "/get",
     response_model=PaginationResponseDto[AppointmentDto],
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_all_appointments(
     pagination: FindManyOptions = Depends(
@@ -60,7 +60,7 @@ async def get_all_appointments(
 @appointment_router.get(
     "/get/{appointment_id}",
     response_model=AppointmentDto,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_appointment_by_id(
     appointment_id: UUID,
@@ -72,7 +72,7 @@ async def get_appointment_by_id(
 @appointment_router.patch(
     "/update/{appointment_id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def update_appointment(
     appointment_id: UUID,
@@ -85,7 +85,7 @@ async def update_appointment(
 @appointment_router.delete(
     "/delete/{appointment_id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def delete_appointment(
     appointment_id: UUID,

@@ -29,7 +29,7 @@ user_service = UserService()
     "/create",
     status_code=HTTP_201_CREATED,
     response_model=UserDto,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def create_user(
     request: CreateUserDto, database: Session = Depends(get_db)
