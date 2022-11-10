@@ -51,7 +51,7 @@ async def get_user_personal_data(
 @personal_data_router.get(
     "/users/get/",
     response_model=List[PersonalDataDto],
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_several_personal_data_by_user_id(
     users_id: List[UUID] = Query(default=None), database: Session = Depends(get_db)
