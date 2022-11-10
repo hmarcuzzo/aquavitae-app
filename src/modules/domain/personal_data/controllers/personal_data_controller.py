@@ -29,7 +29,7 @@ personal_data_service = PersonalDataService()
     "/create",
     status_code=HTTP_201_CREATED,
     response_model=PersonalDataDto,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def create_personal_data(
     request: CreatePersonalDataDto, database: Session = Depends(get_db)
@@ -67,7 +67,7 @@ async def get_several_personal_data_by_user_id(
 @personal_data_router.patch(
     "/update/{user_id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def update_personal_data(
     user_id: UUID,

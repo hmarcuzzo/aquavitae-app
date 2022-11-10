@@ -48,7 +48,7 @@ async def create_appointment_goal(
 @appointment_goal_router.get(
     "/get",
     response_model=PaginationResponseDto[AppointmentGoalDto],
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_all_appointment_goal(
     pagination: FindManyOptions = Depends(
@@ -64,7 +64,7 @@ async def get_all_appointment_goal(
 @appointment_goal_router.get(
     "/get/{appointment_goal_id}",
     response_model=AppointmentGoalDto,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST, UserRole.ADMIN]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_appointment_goal_by_id(
     appointment_goal_id: UUID,

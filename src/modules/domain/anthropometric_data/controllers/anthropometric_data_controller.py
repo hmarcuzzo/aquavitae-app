@@ -42,7 +42,7 @@ anthropometric_data_service = AnthropometricDataService()
     "/create",
     status_code=HTTP_201_CREATED,
     response_model=AnthropometricDataDto,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def create_anthropometric_data(
     request: CreateAnthropometricDataDto, database: Session = Depends(get_db)
@@ -66,7 +66,7 @@ async def get_user_newest_anthropometric_data(
 @anthropometric_data_router.get(
     "/get",
     response_model=PaginationResponseDto[AnthropometricDataDto],
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_all_anthropometric_data_by_user_id(
     pagination: FindManyOptions = Depends(
@@ -82,7 +82,7 @@ async def get_all_anthropometric_data_by_user_id(
 @anthropometric_data_router.get(
     "/get/{anthropometric_data_id}",
     response_model=AnthropometricDataDto,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_anthropometric_data_by_id(
     anthropometric_data_id: UUID,
@@ -96,7 +96,7 @@ async def get_anthropometric_data_by_id(
 @anthropometric_data_router.patch(
     "/update/{anthropometric_data_id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def update_anthropometric_data(
     anthropometric_data_id: UUID,
@@ -126,7 +126,7 @@ async def user_update_anthropometric_data(
 @anthropometric_data_router.delete(
     "/delete/{anthropometric_data_id}",
     response_model=UpdateResult,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
+    dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def delete_anthropometric_data(
     anthropometric_data_id: UUID,
