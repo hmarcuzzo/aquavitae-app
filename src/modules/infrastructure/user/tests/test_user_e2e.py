@@ -253,17 +253,12 @@ class TestDeleteUser(TestBaseE2E):
         self, user_admin: Optional[LoginPayloadDto], user_common: Optional[LoginPayloadDto]
     ) -> None:
         personal_data_service = PersonalDataService()
-        with pytest.raises(NotFoundException) as e_info:
+        assert (
             await personal_data_service.find_one_personal_data(
                 str(user_common.user.id), self.db_test_utils.db
             )
-
-        assert e_info.type == NotFoundException
-        assert (
-            e_info.value.msg
-            == 'Could not find any entity of type "PersonalData" that matches the criteria'
+            is None
         )
-        assert e_info.value.status_code == HTTP_404_NOT_FOUND
 
         anthropometric_data_service = AnthropometricDataService()
         response = await anthropometric_data_service.get_all_user_anthropometric_data(
