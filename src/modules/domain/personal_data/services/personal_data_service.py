@@ -31,15 +31,8 @@ class PersonalDataService:
         return PersonalDataDto(**new_personal_data.__dict__)
 
     async def find_one_personal_data(self, user_id: str, db: Session) -> Optional[PersonalDataDto]:
-        personal_data = await self.personal_data_repository.find_one_or_fail(
-            {
-                "where": PersonalData.user_id == user_id,
-                "relations": ["activity_level", "user"],
-            },
-            db,
-        )
-
-        return PersonalDataDto(**personal_data.__dict__)
+        response = await self.find_several_personal_data_by_id([user_id], db)
+        return response[0] if response else None
 
     async def find_several_personal_data_by_id(
         self, users_id: List[str], db: Session

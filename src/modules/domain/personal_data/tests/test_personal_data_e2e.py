@@ -155,44 +155,6 @@ class TestGetUserPersonalData(TestBaseE2E):
         await self.get_different_required_authentication(self.route, user_nutritionist)
 
 
-@pytest.mark.describe(f"GET Route: /{CONTROLLER}/get/<user_id>")
-class TestGetPersonalDataByUserId(TestBaseE2E):
-    route = f"/{CONTROLLER}/get/"
-
-    @pytest.mark.asyncio
-    @pytest.mark.it("Success: Get personal data by user id")
-    async def test_get_personal_data_by_user_id(
-        self, user_nutritionist: Optional[LoginPayloadDto], user_common: Optional[LoginPayloadDto]
-    ) -> None:
-        async with AsyncClient(app=app, base_url=self.base_url) as ac:
-            response = await ac.get(
-                self.route + f"{user_common.user.id}",
-                headers={"Authorization": f"Bearer {user_nutritionist.access_token}"},
-            )
-
-        data = response.json()
-
-        assert response.status_code == HTTP_200_OK
-        assert isinstance(data, dict)
-        assert data["user"]["id"] == str(user_common.user.id)
-
-    @pytest.mark.asyncio
-    @pytest.mark.it("Failure: Get one personal data without authentication")
-    async def test_no_authentication(self, user_common: Optional[LoginPayloadDto]) -> None:
-        await self.get_no_authentication((self.route + f"{user_common.user.id}"))
-
-    @pytest.mark.asyncio
-    @pytest.mark.it("Failure: Get one personal data with non required authentication")
-    @pytest.mark.parametrize("user", ["user_common", "user_admin"])
-    async def test_different_required_authentication(
-        self, user: str, user_common: Optional[LoginPayloadDto], request: FixtureRequest
-    ) -> None:
-        user: LoginPayloadDto = request.getfixturevalue(user)
-        await self.get_different_required_authentication(
-            (self.route + f"{user_common.user.id}"), user
-        )
-
-
 @pytest.mark.describe(f"GET Route: /{CONTROLLER}/users/get/")
 class TestGetSeveralPersonalDataByUserId(TestBaseE2E):
     route = f"/{CONTROLLER}/users/get/"
@@ -272,11 +234,12 @@ class TestUpdatePersonalData(TestBaseE2E):
 
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             response = await ac.get(
-                f"/{CONTROLLER}/get/{user_common.user.id}",
+                f"/{CONTROLLER}/users/get/",
+                params=[("users_id", user_common.user.id)],
                 headers={"Authorization": f"Bearer {user_nutritionist.access_token}"},
             )
 
-        data = response.json()
+        data = response.json()[0]
 
         assert response.status_code == HTTP_200_OK
         assert data["occupation"] is None

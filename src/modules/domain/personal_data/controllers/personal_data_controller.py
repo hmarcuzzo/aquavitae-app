@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -49,24 +49,16 @@ async def get_user_personal_data(
 
 
 @personal_data_router.get(
-    "/get/{user_id}",
-    response_model=PersonalDataDto,
-    dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
-)
-async def get_personal_data_by_id(
-    user_id: UUID, database: Session = Depends(get_db)
-) -> Optional[PersonalDataDto]:
-    return await personal_data_service.find_one_personal_data(str(user_id), database)
-
-
-@personal_data_router.get(
     "/users/get/",
     response_model=List[PersonalDataDto],
     dependencies=[Depends(Auth([UserRole.NUTRITIONIST]))],
 )
 async def get_several_personal_data_by_user_id(
-    users_id: Union[List[UUID], None] = Query(default=None), database: Session = Depends(get_db)
-) -> Optional[PersonalDataDto]:
+    users_id: List[UUID] = Query(default=None), database: Session = Depends(get_db)
+) -> Union[list, list[PersonalDataDto]]:
+    if users_id is None:
+        return []
+
     return await personal_data_service.find_several_personal_data_by_id(
         [str(user_id) for user_id in users_id], database
     )
