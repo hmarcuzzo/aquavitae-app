@@ -78,6 +78,9 @@ auto-changelog = "*"
 python-dotenv = "*"
 black = "*"
 pycodestyle = "*"
+pytest-testdox = "*"
+pytest-cov = "*"
+pillow = "*"
 
 [dev-packages]
 

@@ -22,7 +22,7 @@ class FoodCategory(BaseEntity):
         backref=backref("food_categories"),
     )
 
-    foods = relationship("Food")
+    foods = relationship("Food", back_populates="food_category", cascade="all, delete-orphan")
 
     def __init__(
         self, description: str, level: int, food_category_id: UUID = None, *args, **kwargs

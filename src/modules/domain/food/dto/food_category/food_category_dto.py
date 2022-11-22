@@ -16,6 +16,7 @@ class FoodCategoryDto(BaseDto):
     def __init__(self, **kwargs):
         if "food_category" not in kwargs:
             kwargs["food_category"] = kwargs["food_category_id"]
+
         super().__init__(**kwargs)
 
     class Config:

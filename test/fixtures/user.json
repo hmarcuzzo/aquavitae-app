@@ -1,0 +1,46 @@
+[
+  {
+    "id": "3e535e14-d26c-4dc8-ae28-096ff05453fb",
+    "created_at": "2022-06-21 17:10:40.502594 +00:00",
+    "updated_at": "2022-06-21 17:10:40.502594 +00:00",
+    "deleted_at": null,
+    "email": "henrique_user@gmail.com",
+    "password": "$argon2id$v=19$m=102400,t=2,p=8$LAWgtPZea+2ds1bKWYuxNg$5X1xey9Cap8KGB9a+nbMaA",
+    "role": "USER",
+    "last_access": null,
+    "profile_photo": null
+  },
+  {
+    "id": "4fbc9c6a-8103-417b-9e76-2856d247b694",
+    "created_at": "2022-06-21 17:11:15.893395 +00:00",
+    "updated_at": "2022-06-21 17:11:15.893395 +00:00",
+    "deleted_at": null,
+    "email": "henrique_nutri@gmail.com",
+    "password": "$argon2id$v=19$m=102400,t=2,p=8$Tcl5L2UsJUToHeMcI6S09g$t5dXx9kyBNEFoXq+4hPrmA",
+    "role": "NUTRITIONIST",
+    "last_access": null,
+    "profile_photo": null
+  },
+  {
+    "id": "09cdf815-9cda-4a87-8ae9-34c06f915278",
+    "created_at": "2022-06-22 17:11:15.893395 +00:00",
+    "updated_at": "2022-06-22 17:11:15.893395 +00:00",
+    "deleted_at": null,
+    "email": "henrique_admin@gmail.com",
+    "password": "$argon2id$v=19$m=102400,t=2,p=8$Tcl5L2UsJUToHeMcI6S09g$t5dXx9kyBNEFoXq+4hPrmA",
+    "role": "ADMIN",
+    "last_access": null,
+    "profile_photo": null
+  },
+  {
+    "id": "5fbffb2b-531c-4f79-9f76-4f44e2a1dc21",
+    "created_at": "2022-06-21 17:10:40.502594 +00:00",
+    "updated_at": "2022-06-21 17:10:40.502594 +00:00",
+    "deleted_at": null,
+    "email": "henrique_user2@gmail.com",
+    "password": "$argon2id$v=19$m=102400,t=2,p=8$LAWgtPZea+2ds1bKWYuxNg$5X1xey9Cap8KGB9a+nbMaA",
+    "role": "USER",
+    "last_access": null,
+    "profile_photo": null
+  }
+]

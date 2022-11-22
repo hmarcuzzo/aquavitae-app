@@ -23,16 +23,16 @@ class FoodService:
     async def create_food(
         self, food_dto: CreateFoodDto, db: Session
     ) -> Optional[FoodDto]:
-        new_food = await self.food_repository.create(db, food_dto)
+        new_food = await self.food_repository.create(food_dto, db)
 
-        new_food = await self.food_repository.save(db, new_food)
+        new_food = await self.food_repository.save(new_food, db)
         return FoodDto(**new_food.__dict__)
 
     async def get_all_food_paginated(
         self, pagination: FindManyOptions, db: Session
     ) -> Optional[PaginationResponseDto[FoodDto]]:
         pagination["relations"] = ["food_category"]
-        [all_food, total] = await self.food_repository.find_and_count(db, pagination)
+        [all_food, total] = await self.food_repository.find_and_count(pagination, db)
 
         return create_pagination_response_dto(
             [FoodDto(**food.__dict__) for food in all_food],
@@ -43,15 +43,15 @@ class FoodService:
 
     async def find_one_food(self, food_id: str, db: Session) -> Optional[FoodDto]:
         food = await self.food_repository.find_one_or_fail(
-            db, {"where": Food.id == food_id, "relations": ["food_category"]}
+            {"where": Food.id == food_id, "relations": ["food_category"]}, db
         )
 
         return FoodDto(**food.__dict__)
 
     async def delete_food(self, food_id: str, db: Session) -> Optional[UpdateResult]:
-        return await self.food_repository.soft_delete(db, food_id)
+        return await self.food_repository.soft_delete(food_id, db)
 
     async def update_food(
         self, id: str, update_food_dto: UpdateFoodDto, db: Session
     ) -> Optional[UpdateResult]:
-        return await self.food_repository.update(db, id, update_food_dto)
+        return await self.food_repository.update(id, update_food_dto, db)
