@@ -167,7 +167,7 @@ class PaginationUtils:
                         query_dto_fields[field].required or field in columns
                     ):
                         paging_params["relations"].append(field)
-                        columns.remove(field)
+                        columns.remove(field) if field in columns else None
                         for entity_relationships in inspect(inspect(entity).class_).relationships:
                             if entity_relationships.key == field:
                                 columns.append(list(entity_relationships.local_columns)[0].name)
