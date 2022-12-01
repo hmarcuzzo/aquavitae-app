@@ -206,7 +206,7 @@ class TestGetSeveralPersonalDataByUserId(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get several personal data with non required authentication")
-    @pytest.mark.parametrize("user", ["user_common", "user_admin"])
+    @pytest.mark.parametrize("user", ["user_common"])
     async def test_different_required_authentication(
         self, user: str, user_common: Optional[LoginPayloadDto], request: FixtureRequest
     ) -> None:

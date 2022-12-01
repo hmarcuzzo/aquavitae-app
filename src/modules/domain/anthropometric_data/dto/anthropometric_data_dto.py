@@ -23,7 +23,7 @@ class AnthropometricDataDto(BaseDto):
     body_photo: Optional[bytes]
 
     def __init__(self, **kwargs):
-        if "user" not in kwargs:
+        if "user" not in kwargs and "user_id" in kwargs:
             kwargs["user"] = kwargs["user_id"]
 
         super().__init__(**kwargs)

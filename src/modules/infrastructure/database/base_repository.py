@@ -3,7 +3,7 @@ from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import Query, Session, subqueryload
+from sqlalchemy.orm import load_only, Query, Session, subqueryload
 from sqlalchemy_utils import get_class_by_table, get_columns
 
 from src.core.types.delete_result_type import DeleteResult
@@ -37,20 +37,20 @@ class BaseRepository(Generic[T]):
         query = query.enable_assertions(False)
 
         for key in options_dict.keys():
-            if key == "where":
-                query = query.where(*options_dict["where"])
+            if key == "select":
+                query = query.options(load_only(*options_dict[key]))
+            elif key == "where":
+                query = query.where(*options_dict[key])
             elif key == "order_by":
-                query = query.order_by(*options_dict["order_by"])
+                query = query.order_by(*options_dict[key])
             elif key == "skip":
-                query = query.offset(options_dict["skip"])
+                query = query.offset(options_dict[key])
             elif key == "take":
-                query = query.limit(options_dict["take"])
+                query = query.limit(options_dict[key])
             elif key == "relations":
-                query = query.options(
-                    subqueryload(getattr(self.entity, *options_dict["relations"]))
-                )
+                query = query.options(subqueryload(getattr(self.entity, *options_dict[key])))
             elif key == "with_deleted":
-                self.with_deleted = options_dict["with_deleted"]
+                self.with_deleted = options_dict[key]
             else:
                 raise KeyError(f"Unknown option: {key} in FindOptions")
 

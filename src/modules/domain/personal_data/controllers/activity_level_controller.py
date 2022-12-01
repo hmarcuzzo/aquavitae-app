@@ -12,10 +12,16 @@ from src.core.decorators.pagination_decorator import GetPagination
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.update_result_type import UpdateResult
 from src.modules.domain.personal_data.dto.activity_level.activity_level_dto import ActivityLevelDto
-from src.modules.domain.personal_data.dto.activity_level.activity_level_query_dto import (FindAllActivityLevelQueryDto,
-                                                                                          OrderByActivityLevelQueryDto)
-from src.modules.domain.personal_data.dto.activity_level.create_activity_level_dto import CreateActivityLevelDto
-from src.modules.domain.personal_data.dto.activity_level.update_activity_level_dto import UpdateActivityLevelDto
+from src.modules.domain.personal_data.dto.activity_level.activity_level_query_dto import (
+    FindAllActivityLevelQueryDto,
+    OrderByActivityLevelQueryDto,
+)
+from src.modules.domain.personal_data.dto.activity_level.create_activity_level_dto import (
+    CreateActivityLevelDto,
+)
+from src.modules.domain.personal_data.dto.activity_level.update_activity_level_dto import (
+    UpdateActivityLevelDto,
+)
 from src.modules.domain.personal_data.entities.activity_level_entity import ActivityLevel
 from src.modules.domain.personal_data.services.activity_level_service import ActivityLevelService
 from src.modules.infrastructure.database import get_db
@@ -40,19 +46,21 @@ async def create_activity_level(
 @activity_level_router.get(
     "/get",
     response_model=PaginationResponseDto[ActivityLevelDto],
+    response_model_exclude_unset=True,
     dependencies=[Depends(Auth([UserRole.ADMIN]))],
 )
 async def get_all_activity_level_paginated(
     pagination: FindManyOptions = Depends(
         GetPagination(
-            ActivityLevel, FindAllActivityLevelQueryDto, OrderByActivityLevelQueryDto
+            ActivityLevel,
+            ActivityLevelDto,
+            FindAllActivityLevelQueryDto,
+            OrderByActivityLevelQueryDto,
         )
     ),
     database: Session = Depends(get_db),
 ) -> Optional[PaginationResponseDto[ActivityLevelDto]]:
-    return await activity_level_service.get_all_activity_level_paginated(
-        pagination, database
-    )
+    return await activity_level_service.get_all_activity_level_paginated(pagination, database)
 
 
 @activity_level_router.get(

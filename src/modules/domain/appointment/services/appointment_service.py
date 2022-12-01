@@ -62,8 +62,6 @@ class AppointmentService:
     async def get_all_appointments(
         self, pagination: FindManyOptions, db: Session
     ) -> Optional[PaginationResponseDto[AppointmentDto]]:
-        pagination["relations"] = ["user", "appointment_has_goals"]
-
         [all_appointment, total] = await self.appointment_repository.find_and_count(
             pagination,
             db,
