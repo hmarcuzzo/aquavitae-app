@@ -52,11 +52,12 @@ async def create_user_with_role(
 @user_router.get(
     "/get",
     response_model=PaginationResponseDto[UserDto],
+    response_model_exclude_unset=True,
     dependencies=[Depends(Auth([UserRole.ADMIN]))],
 )
 async def get_all_users(
     pagination: FindManyOptions = Depends(
-        GetPagination(User, FindAllUserQueryDto, OrderByUserQueryDto)
+        GetPagination(User, UserDto, FindAllUserQueryDto, OrderByUserQueryDto)
     ),
     database: Session = Depends(get_db),
 ) -> Optional[PaginationResponseDto[UserDto]]:

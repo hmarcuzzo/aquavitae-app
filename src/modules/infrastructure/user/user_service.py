@@ -6,7 +6,10 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from src.core.common.dto.pagination_response_dto import create_pagination_response_dto
+from src.core.common.dto.pagination_response_dto import (
+    create_pagination_response_dto,
+    PaginationResponseDto,
+)
 from src.core.types.exceptions_type import BadRequestException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
@@ -61,7 +64,7 @@ class UserService:
 
     async def get_all_users(
         self, pagination: FindManyOptions, db_session: Session
-    ) -> Optional[List[UserDto]]:
+    ) -> Optional[PaginationResponseDto[UserDto]]:
         [all_users, total] = await self.user_repository.find_and_count(
             pagination,
             db_session,
@@ -69,7 +72,8 @@ class UserService:
 
         users_dto = []
         for user in all_users:
-            user.profile_photo = self.image_utils.get_image(user.profile_photo)
+            if "profile_photo" in pagination["select"]:
+                user.profile_photo = self.image_utils.get_image(user.profile_photo)
             users_dto.append(UserDto(**user.__dict__))
 
         return create_pagination_response_dto(
