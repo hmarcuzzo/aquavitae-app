@@ -159,18 +159,22 @@ class PaginationUtils:
         paging_params: FindManyOptions, columns: List[str], columns_query_dto: C, entity: E
     ) -> (FindManyOptions, List[str]):
         query_dto_fields = columns_query_dto.__fields__
+        entity_relationships = inspect(inspect(entity).class_).relationships
+        entity_relationships_keys = entity_relationships.keys()
 
         for field in query_dto_fields:
-            if query_dto_fields[field].sub_fields:
-                for sub_field in query_dto_fields[field].sub_fields:
-                    if isinstance(sub_field.type_, ModelMetaclass) and (
-                        query_dto_fields[field].required or field in columns
-                    ):
-                        paging_params["relations"].append(field)
-                        columns.remove(field) if field in columns else None
-                        for entity_relationships in inspect(inspect(entity).class_).relationships:
-                            if entity_relationships.key == field:
-                                columns.append(list(entity_relationships.local_columns)[0].name)
+            if field in entity_relationships_keys and (
+                query_dto_fields[field].required or field in columns
+            ):
+                paging_params["relations"].append(field)
+                columns.remove(field) if field in columns else None
+                columns.append(
+                    list(
+                        list(entity_relationships)[
+                            entity_relationships_keys.index(field)
+                        ].local_columns
+                    )[0].name
+                )
 
             elif query_dto_fields[field].required and field not in columns:
                 columns.append(field)
