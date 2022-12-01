@@ -20,9 +20,7 @@ class FoodService:
         self.food_repository = FoodRepository()
 
     # ---------------------- PUBLIC METHODS ----------------------
-    async def create_food(
-        self, food_dto: CreateFoodDto, db: Session
-    ) -> Optional[FoodDto]:
+    async def create_food(self, food_dto: CreateFoodDto, db: Session) -> Optional[FoodDto]:
         new_food = await self.food_repository.create(food_dto, db)
 
         new_food = await self.food_repository.save(new_food, db)
@@ -31,7 +29,6 @@ class FoodService:
     async def get_all_food_paginated(
         self, pagination: FindManyOptions, db: Session
     ) -> Optional[PaginationResponseDto[FoodDto]]:
-        pagination["relations"] = ["food_category"]
         [all_food, total] = await self.food_repository.find_and_count(pagination, db)
 
         return create_pagination_response_dto(
