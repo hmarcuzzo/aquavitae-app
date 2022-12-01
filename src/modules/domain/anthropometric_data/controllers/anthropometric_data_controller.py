@@ -66,12 +66,16 @@ async def get_user_newest_anthropometric_data(
 @anthropometric_data_router.get(
     "/get",
     response_model=PaginationResponseDto[AnthropometricDataDto],
+    response_model_exclude_unset=True,
     dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_all_anthropometric_data_by_user_id(
     pagination: FindManyOptions = Depends(
         GetPagination(
-            AnthropometricData, FindAllAnthropometricDataQueryDto, OrderByAnthropometricDataQueryDto
+            AnthropometricData,
+            AnthropometricDataDto,
+            FindAllAnthropometricDataQueryDto,
+            OrderByAnthropometricDataQueryDto,
         )
     ),
     database: Session = Depends(get_db),

@@ -97,8 +97,6 @@ class AnthropometricDataService:
     async def get_all_user_anthropometric_data(
         self, pagination: FindManyOptions, db: Session
     ) -> Optional[PaginationResponseDto[AnthropometricDataDto]]:
-        pagination["relations"] = ["user"]
-
         [
             all_user_anthropometric_data,
             total,
@@ -109,9 +107,10 @@ class AnthropometricDataService:
 
         all_anthropometric_data_dto = []
         for anthropometric_data in all_user_anthropometric_data:
-            anthropometric_data.body_photo = self.image_utils.get_image(
-                anthropometric_data.body_photo
-            )
+            if "body_photo" in pagination["select"]:
+                anthropometric_data.body_photo = self.image_utils.get_image(
+                    anthropometric_data.body_photo
+                )
             all_anthropometric_data_dto.append(
                 AnthropometricDataDto(**anthropometric_data.__dict__)
             )
