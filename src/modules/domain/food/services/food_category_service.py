@@ -37,7 +37,6 @@ class FoodCategoryService:
     async def get_all_food_category_paginated(
         self, pagination: FindManyOptions, db: Session
     ) -> Optional[PaginationResponseDto[FoodCategoryDto]]:
-        pagination["relations"] = ["food_category"]
         [
             all_food_categories,
             total,
