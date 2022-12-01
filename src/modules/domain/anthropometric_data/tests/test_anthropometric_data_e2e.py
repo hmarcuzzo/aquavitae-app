@@ -197,7 +197,7 @@ class TestGetAnthropometricDataByUserId(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get anthropometric data with non required authentication")
-    @pytest.mark.parametrize("user", ["user_common", "user_admin"])
+    @pytest.mark.parametrize("user", ["user_common"])
     async def test_different_required_authentication(
         self, user: str, user_common: Optional[LoginPayloadDto], request: FixtureRequest
     ) -> None:
@@ -241,7 +241,7 @@ class TestGetAnthropometricDataId(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get anthropometric data with non required authentication")
-    @pytest.mark.parametrize("user", ["user_common", "user_admin"])
+    @pytest.mark.parametrize("user", ["user_common"])
     async def test_different_required_authentication(
         self, user: str, user_common: Optional[LoginPayloadDto], request: FixtureRequest
     ) -> None:

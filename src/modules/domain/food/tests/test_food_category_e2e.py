@@ -150,6 +150,7 @@ class TestGetAllFoodCategories(TestBaseE2E):
             response = await ac.get(
                 self.route,
                 headers={"Authorization": f"Bearer {user_admin.access_token}"},
+                params={"columns": ["food_category"]},
             )
 
         body = response.json()
