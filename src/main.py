@@ -9,6 +9,7 @@ from config import APP_ENV, APP_PORT, APP_TZ, CORS_ORIGINS
 from src.core.common.custom_error_response import custom_error_response
 from src.core.handlers.http_exceptions_handler import HttpExceptionsHandler
 from src.core.middlewares.limit_upload_size import LimitUploadSize
+from src.core.middlewares.security_logs import SecurityLogs
 from src.modules.app import app_routers
 
 app = FastAPI(title="Aquavitae App", version="0.0.1")
@@ -23,6 +24,7 @@ app.add_middleware(
 )
 
 app.add_middleware(LimitUploadSize, max_upload_size=50_000_000)  # ~50MB
+app.add_middleware(SecurityLogs)
 
 # Register all custom exception handler
 HttpExceptionsHandler(app)
