@@ -210,7 +210,7 @@ class TestUpdateAppointment(TestBaseE2E):
         data = response.json()
 
         assert response.status_code == HTTP_200_OK
-        assert data["appointment_goals"] == []
+        assert data["appointment_has_goals"] == []
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Update appointment without authentication")
