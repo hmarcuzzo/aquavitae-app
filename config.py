@@ -28,3 +28,6 @@ DATABASE_NAME = os.getenv("DATABASE_NAME") if APP_ENV != "test" else TEST_DATABA
 TOKEN_SECRET_KEY = os.getenv("TOKEN_SECRET_KEY")
 TOKEN_EXPIRATION_MINUTES = int(os.getenv("TOKEN_EXPIRATION_MINUTES"))
 TOKEN_ALGORITHM = os.getenv("TOKEN_ALGORITHM")
+
+# --------------- DEFAULT BLOCKCHAIN CONFIGURATIONS --------------- #
+ENCRYPT_KEY = bytes(os.getenv("ENCRYPT_KEY").encode("utf-8"))
