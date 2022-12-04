@@ -81,6 +81,7 @@ pycodestyle = "*"
 pytest-testdox = "*"
 pytest-cov = "*"
 pillow = "*"
+cipher = "*"
 
 [dev-packages]
 
