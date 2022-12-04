@@ -25,11 +25,14 @@ class AppointmentDto(BaseDto):
         if "user" not in kwargs and "user_id" in kwargs:
             kwargs["user"] = kwargs["user_id"]
 
-        if "appointment_has_goals" in kwargs and isinstance(
-            kwargs["appointment_has_goals"][0], AppointmentHasAppointmentGoal
+        if (
+            "appointment_has_goals" in kwargs
+            and len(kwargs["appointment_has_goals"]) > 0
+            and isinstance(kwargs["appointment_has_goals"][0], AppointmentHasAppointmentGoal)
         ):
             kwargs["appointment_has_goals"] = [
-                goal.appointment_goal for goal in kwargs["appointment_has_goals"]
+                (goal.appointment_goal if goal.appointment_goal else goal.appointment_goal_id)
+                for goal in kwargs["appointment_has_goals"]
             ]
 
         super().__init__(**kwargs)
