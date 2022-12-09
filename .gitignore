@@ -107,3 +107,6 @@ pyvenv.cfg
 .mypy_cache/
 
 .idea/*
+
+# Blockchain
+src/modules/blockchain/server_wallet.py

@@ -82,6 +82,7 @@ pytest-testdox = "*"
 pytest-cov = "*"
 pillow = "*"
 cipher = "*"
+pycryptodome = "*"
 
 [dev-packages]
 
