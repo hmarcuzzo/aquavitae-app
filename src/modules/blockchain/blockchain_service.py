@@ -21,7 +21,10 @@ class BlockchainService:
             async with AsyncClient(base_url=self.base_url) as ac:
                 response = await ac.post(
                     "/add",
-                    json={"new_block": signed_body},
+                    json={
+                        "signature": signed_body,
+                        "transaction_hash": encrypted_body.decode("utf-8"),
+                    },
                 )
             # data = response.json()
         except Exception:
