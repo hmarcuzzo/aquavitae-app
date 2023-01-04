@@ -81,6 +81,9 @@ pycodestyle = "*"
 pytest-testdox = "*"
 pytest-cov = "*"
 pillow = "*"
+pytest-reportlog = "*"
+pytest-duration-insights = "*"
+pytest-durations = "*"
 
 [dev-packages]
 
