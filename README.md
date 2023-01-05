@@ -71,8 +71,9 @@ To build the project run the following commands in terminal, step by step:
       ```
 
        * *Note*: You can also run in terminal just ```$ pytest```
-       * *Note*: To get the code coverage you can add the following parameters ``` --cov=. --cov-report=html```
-
+       * *Note*: To get the code coverage you can add the following parameters ```--cov=. --cov-report=html```
+       * *Note*: To get performance reports you can add the following parameter ```--report-log reportlog.jsonl```
+         * To view the generated report run ```$ pytest-duration-insights explore reportlog.jsonl```
 
 ## License
 [MIT License](/LICENSE.md)
