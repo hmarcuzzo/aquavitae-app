@@ -20,6 +20,7 @@
 ## How to execute
 To build the project run the following commands in terminal, step by step:
 
+### Manually
 1. Creating a virtual environment with pipenv
     ```
     $ cd /path/to/project
@@ -55,6 +56,26 @@ To build the project run the following commands in terminal, step by step:
     ```
     $ python src/core/scripts/initial_data.py
     ```
+   
+### With Docker
+1. Have Docker and Docker Compose installed
+    ```
+    $ sudo apt install docker docker-compose
+    ```
+   
+2. Run the following command in the project *root* directory
+    ```
+    $ docker-compose up
+    ```
+   
+3. Open the application docker terminal to create the tables in the database and fill them with the necessary initial 
+data 
+    ```
+    $ docker exec -it <CONTAINER_NAME> bash
+    $ alembic upgrade head
+    $ python src/core/scripts/initial_data.py
+    ```
+
   
 ## How to execute the tests
 1. In the **.env** file put your  ```APP_ENV=test ```
@@ -71,8 +92,9 @@ To build the project run the following commands in terminal, step by step:
       ```
 
        * *Note*: You can also run in terminal just ```$ pytest```
-       * *Note*: To get the code coverage you can add the following parameters ``` --cov=. --cov-report=html```
-
+       * *Note*: To get the code coverage you can add the following parameters ```--cov=. --cov-report=html```
+       * *Note*: To get performance reports you can add the following parameter ```--report-log reportlog.jsonl```
+         * To view the generated report run ```$ pytest-duration-insights explore reportlog.jsonl```
 
 ## License
 [MIT License](/LICENSE.md)
