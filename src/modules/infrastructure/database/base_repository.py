@@ -296,9 +296,12 @@ class BaseRepository(Generic[T]):
         return _entity
 
     @staticmethod
-    async def save(_entity: T, db: Session = next(get_db())) -> Optional[T]:
+    async def save(_entity: Union[T, List[T]], db: Session = next(get_db())) -> Optional[T]:
         db.commit()
-        db.refresh(_entity)
+
+        db.refresh(_entity) if not isinstance(_entity, List) else (
+            db.refresh(_en) for _en in _entity
+        )
         return _entity
 
     async def delete(
