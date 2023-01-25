@@ -24,8 +24,6 @@ from src.modules.infrastructure.auth.dto.login_payload_dto import LoginPayloadDt
 from src.modules.infrastructure.user.user_service import UserService
 from test.test_base_e2e import TestBaseE2E
 
-from src.core.types.exceptions_type import NotFoundException
-
 CONTROLLER = "user"
 user_service = UserService()
 

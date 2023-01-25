@@ -11,13 +11,11 @@ from starlette.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
-from src.core.types.exceptions_type import NotFoundException
+from src.core.constants.default_values import DEFAULT_AMOUNT_GRAMS
 from src.main import app
-from src.modules.domain.food.entities.food_category_entity import FoodCategory
 from src.modules.domain.food.entities.food_entity import Food
-from src.modules.domain.food.repositories.food_repository import FoodRepository
-from src.modules.domain.food.services.food_category_service import FoodCategoryService
 from src.modules.domain.food.services.food_service import FoodService
+from src.modules.domain.item.entities.item_has_food_entity import ItemHasFood
 from src.modules.infrastructure.auth.dto.login_payload_dto import LoginPayloadDto
 from test.test_base_e2e import TestBaseE2E
 
@@ -59,6 +57,13 @@ class TestCreateFood(TestBaseE2E):
 
         assert activity_level_dto is not None
         assert activity_level_dto.energy_value == data["energy_value"]
+
+        new_item_has_food = (
+            self.db_test_utils.db.query(ItemHasFood).where(ItemHasFood.food_id == data["id"]).all()
+        )
+        assert len(new_item_has_food) == 1
+        assert str(new_item_has_food[0].food_id) == data["id"]
+        assert new_item_has_food[0].amount_grams == DEFAULT_AMOUNT_GRAMS
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a food with deleted relation")
