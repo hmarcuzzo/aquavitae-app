@@ -249,9 +249,7 @@ class TestDeleteFood(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Delete food already deleted")
-    async def test_delete_food_category_already_deleted(
-        self, user_admin: Optional[LoginPayloadDto]
-    ) -> None:
+    async def test_delete_food_already_deleted(self, user_admin: Optional[LoginPayloadDto]) -> None:
         food_item = self.db_test_utils.get_entity_objects(Food)[0]
 
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
