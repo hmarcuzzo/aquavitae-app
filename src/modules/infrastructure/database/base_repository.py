@@ -171,7 +171,7 @@ class BaseRepository(Generic[T]):
             result = await BaseRepository(inspect(cascade_entity).class_).__soft_delete_cascade(
                 str(cascade_entity.id), db
             )
-            rowcount = result["affected"]
+            rowcount += result["affected"]
 
         return rowcount
 
