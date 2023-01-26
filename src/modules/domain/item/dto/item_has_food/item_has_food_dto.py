@@ -9,7 +9,7 @@ from src.modules.domain.food.dto.food.food_dto import FoodDto
 
 class ItemHasFoodDto(BaseDto):
     amount_grams: condecimal(decimal_places=2)
-    food: Optional[Union[FoodDto, UUID]]
+    food: Union[FoodDto, UUID]
 
     def __init__(self, **kwargs):
         if "food" not in kwargs and "food_id" in kwargs:

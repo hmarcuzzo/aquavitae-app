@@ -1,25 +1,11 @@
-from typing import List
-from uuid import UUID
+from pydantic import BaseModel, conlist, constr, Extra
 
-from pydantic import BaseModel, constr, Extra, Field, condecimal
-
-from src.core.constants.default_values import DEFAULT_AMOUNT_GRAMS
-
-
-class ListHasFoodDto(BaseModel):
-    amount_grams: condecimal(decimal_places=2) = Field(default=DEFAULT_AMOUNT_GRAMS)
-    food_id: UUID = Field(alias="food")
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    class Config:
-        extra = Extra.forbid
+from src.modules.domain.item.dto.item.list_has_food_dto import ListHasFoodDto
 
 
 class CreateItemDto(BaseModel):
     description: constr(max_length=255)
-    foods: List[ListHasFoodDto]
+    foods: conlist(ListHasFoodDto, min_items=1)
 
     class Config:
         extra = Extra.forbid
