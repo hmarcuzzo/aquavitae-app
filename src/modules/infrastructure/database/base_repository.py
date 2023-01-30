@@ -14,6 +14,7 @@ from src.core.types.update_result_type import UpdateResult
 from src.core.utils.database_utils import DatabaseUtils
 from . import get_db
 from .base import Base
+from .control_transaction import force_nested_transaction_forever
 from .soft_delete_filter import pause_listener
 
 T = TypeVar("T")
@@ -184,7 +185,7 @@ class BaseRepository(Generic[T]):
 
         if not getattr(entity, delete_column.name):
             setattr(entity, delete_column.name, datetime.now())
-            db.commit()
+            db.flush()
 
             return 1
 
@@ -293,6 +294,7 @@ class BaseRepository(Generic[T]):
         await self.__is_relations_valid(db, _entity.__dict__)
 
         db.add(_entity)
+        db.flush()
         return _entity
 
     @staticmethod
@@ -310,7 +312,7 @@ class BaseRepository(Generic[T]):
         entity = await self.find_one_or_fail(criteria, db)
 
         db.delete(entity)
-        db.commit()
+        db.flush()
 
         return DeleteResult(raw=[], affected=1)
 
@@ -318,7 +320,6 @@ class BaseRepository(Generic[T]):
         self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[UpdateResult]:
         try:
-            db.begin_nested()
             response = await self.__soft_delete_cascade(criteria, db)
             db.commit()
             return response

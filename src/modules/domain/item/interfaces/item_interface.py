@@ -14,7 +14,7 @@ class ItemInterface:
         self.item_service = ItemService()
 
     async def create_item_from_food(self, food: Food, db: Session) -> Optional[ItemDto]:
-        return await self.item_service.create_item_interface(
+        return await self.item_service.create_item(
             CreateItemDto(
                 **{
                     "description": food.description,

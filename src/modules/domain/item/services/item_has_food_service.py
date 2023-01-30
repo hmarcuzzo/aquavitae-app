@@ -10,19 +10,17 @@ from src.modules.domain.item.entities.item_entity import Item
 from src.modules.domain.item.entities.item_has_food_entity import ItemHasFood
 from src.modules.domain.item.repositories.item_has_food_repository import ItemHasFoodRepository
 from src.modules.domain.item.repositories.item_repository import ItemRepository
+from src.modules.infrastructure.database.control_transaction import force_nested_transaction_forever
 
 
 class ItemHasFoodService:
     def __init__(self):
         self.item_has_food_repository = ItemHasFoodRepository()
 
-    # ---------------------- PUBLIC METHODS ----------------------
-
     # ---------------------- INTERFACE METHODS ----------------------
     async def create_item_has_food_interface(
         self, item_has_foods: List[CreateItemHasFoodDto], db: Session
     ) -> Optional[List[ItemHasFoodDto]]:
-        db.begin_nested()
         return await self._create_item_has_food(item_has_foods, db)
 
     async def update_item_has_food_interface(
@@ -48,35 +46,33 @@ class ItemHasFoodService:
         item = await ItemRepository().find_one_or_fail(
             {"where": Item.id == update_item_has_foods[0].item_id, "relations": ["foods"]}, db
         )
+        item_foods_id = {item_food.food_id: {item_food.id} for item_food in item.foods}
 
-        response: UpdateResult = UpdateResult(raw=[], affected=0, generatedMaps=[])
+        response = UpdateResult(raw=[], affected=0, generatedMaps=[])
 
-        foods_updated = []
-        for item_food in item.foods:
-            db.begin_nested()
-            updated = False
+        with force_nested_transaction_forever(db):
             for new_food in update_item_has_foods:
-                # Update foods in the new foods list
-                if item_food.food_id == new_food.food_id:
-                    updated = True
-                    foods_updated.append(new_food)
+                if new_food.food_id in item_foods_id:
+                    # Update foods in the new foods list
                     response["affected"] += (
-                        await self.item_has_food_repository.update(str(item_food.id), new_food, db)
+                        await self.item_has_food_repository.update(
+                            str(item_foods_id[new_food.food_id].pop()), new_food, db
+                        )
                     )["affected"]
+                    del item_foods_id[new_food.food_id]
+
+                else:
+                    # Create new foods in update method
+                    response["affected"] += len(await self._create_item_has_food([new_food], db))
 
             # Delete foods not in the new foods list
-            if not updated:
-                response["affected"] += (
-                    await self.item_has_food_repository.soft_delete(str(item_food.id), db)
-                )["affected"]
+            if len(item_foods_id) > 0:
+                for food_id in item_foods_id:
+                    response["affected"] += (
+                        await self.item_has_food_repository.soft_delete(
+                            str(item_foods_id[food_id].pop()), db
+                        )
+                    )["affected"]
 
-        # Create new foods in update method
-        db.begin_nested()
-        response["affected"] += len(
-            await self._create_item_has_food(
-                [new_food for new_food in update_item_has_foods if new_food not in foods_updated],
-                db,
-            )
-        )
-
+        db.commit()
         return response

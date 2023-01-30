@@ -14,6 +14,7 @@ from src.modules.domain.item.dto.item.update_item_dto import UpdateItemDto
 from src.modules.domain.item.entities.item_entity import Item
 from src.modules.domain.item.interfaces.item_has_food_interface import ItemHasFoodInterface
 from src.modules.domain.item.repositories.item_repository import ItemRepository
+from src.modules.infrastructure.database.control_transaction import force_nested_transaction_forever
 
 
 class ItemService:
@@ -24,10 +25,20 @@ class ItemService:
     # ---------------------- PUBLIC METHODS ----------------------
     async def create_item(self, item_dto: CreateItemDto, db: Session) -> Optional[ItemDto]:
         try:
-            db.begin_nested()
-            response = await self._create_item(item_dto, db)
-            db.commit()
+            with force_nested_transaction_forever(db):
+                new_item = await self.item_repository.create(
+                    Item(description=item_dto.description), db
+                )
+                new_item = await self.item_repository.save(new_item, db)
 
+                new_item_foods = await self.item_has_food_interface.create_item_has_food(
+                    new_item, item_dto.foods, db
+                )
+
+                response = ItemDto(**new_item.__dict__)
+                response.foods = [new_item_food.food for new_item_food in new_item_foods]
+
+            db.commit()
             return response
         except Exception as e:
             db.rollback()
@@ -59,47 +70,19 @@ class ItemService:
         self, id: str, update_food_dto: UpdateItemDto, db: Session
     ) -> Optional[UpdateResult]:
         try:
-            db.begin_nested()
-            response = await self._update_item(id, update_food_dto, db)
-            db.commit()
+            with force_nested_transaction_forever(db):
+                list_foods = update_food_dto.foods
+                del update_food_dto.foods
 
+                response = await self.item_repository.update(id, update_food_dto, db)
+
+                if list_foods:
+                    response["affected"] += (
+                        await self.item_has_food_interface.update_item_has_food(id, list_foods, db)
+                    )["affected"]
+
+            db.commit()
             return response
         except Exception as e:
             db.rollback()
             raise e
-
-    # ---------------------- INTERFACE METHODS ----------------------
-    async def create_item_interface(
-        self, item_dto: CreateItemDto, db: Session
-    ) -> Optional[ItemDto]:
-        db.begin_nested()
-        return await self._create_item(item_dto, db)
-
-    # ---------------------- PRIVATE METHODS ----------------------
-    async def _create_item(self, item_dto: CreateItemDto, db: Session) -> Optional[ItemDto]:
-        new_item = await self.item_repository.create(Item(description=item_dto.description), db)
-        new_item = await self.item_repository.save(new_item, db)
-
-        new_item_foods = await self.item_has_food_interface.create_item_has_food(
-            new_item, item_dto.foods, db
-        )
-
-        response = ItemDto(**new_item.__dict__)
-        response.foods = [new_item_food.food for new_item_food in new_item_foods]
-
-        return response
-
-    async def _update_item(
-        self, id: str, item_dto: UpdateItemDto, db: Session
-    ) -> Optional[UpdateResult]:
-        list_foods = item_dto.foods
-        del item_dto.foods
-
-        response = await self.item_repository.update(id, item_dto, db)
-
-        if list_foods:
-            response["affected"] += (
-                await self.item_has_food_interface.update_item_has_food(id, list_foods, db)
-            )["affected"]
-
-        return response
