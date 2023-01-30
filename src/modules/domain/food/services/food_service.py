@@ -63,3 +63,16 @@ class FoodService:
         self, id: str, update_food_dto: UpdateFoodDto, db: Session
     ) -> Optional[UpdateResult]:
         return await self.food_repository.update(id, update_food_dto, db)
+
+    # ---------------------- INTERFACE METHODS ----------------------
+    async def find_one_food_by_description(
+        self, description: str, db: Session
+    ) -> Optional[FoodDto]:
+        food = await self.food_repository.find_one_or_fail(
+            {
+                "where": Food.description == description,
+            },
+            db,
+        )
+
+        return FoodDto(**food.__dict__)

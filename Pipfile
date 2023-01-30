@@ -84,6 +84,8 @@ pillow = "*"
 pytest-reportlog = "*"
 pytest-duration-insights = "*"
 pytest-durations = "*"
+pandas = "*"
+openpyxl = "*"
 
 [dev-packages]
 

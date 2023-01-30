@@ -71,3 +71,16 @@ class FoodCategoryService:
         self, food_category_id: str, db: Session
     ) -> Optional[UpdateResult]:
         return await self.food_category_repository.soft_delete(food_category_id, db)
+
+    # ---------------------- INTERFACE METHODS ----------------------
+    async def find_one_category_by_description(
+        self, description: str, db: Session
+    ) -> Optional[FoodCategoryDto]:
+        food_category = await self.food_category_repository.find_one_or_fail(
+            {
+                "where": FoodCategory.description == description,
+            },
+            db,
+        )
+
+        return FoodCategoryDto(**food_category.__dict__)
