@@ -14,7 +14,6 @@ from src.core.types.update_result_type import UpdateResult
 from src.core.utils.database_utils import DatabaseUtils
 from . import get_db
 from .base import Base
-from .control_transaction import force_nested_transaction_forever
 from .soft_delete_filter import pause_listener
 
 T = TypeVar("T")

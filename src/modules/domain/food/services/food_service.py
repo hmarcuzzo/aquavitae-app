@@ -30,9 +30,7 @@ class FoodService:
                 await self.item_interface.create_item_from_food(new_food, db)
 
             new_food = self.food_repository.save(new_food, db)
-            response = FoodDto(**new_food.__dict__)
-            # db.commit()
-            return response
+            return FoodDto(**new_food.__dict__)
         except Exception as e:
             db.rollback()
             raise e
