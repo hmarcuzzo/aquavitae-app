@@ -23,3 +23,5 @@ async def import_default_specificity_types() -> None:
                     db=db_session,
                 )
                 print(f"Created: {TYPE.value} ({result.id})")
+
+    print("\nImported default specificity types.\n")
