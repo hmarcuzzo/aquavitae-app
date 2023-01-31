@@ -38,7 +38,7 @@ async def import_default_category_foods(df: pd.DataFrame) -> pd.DataFrame:
 
         for index, row in tmp_df.items():
             if not isinstance(row, str):
-                print(f"Skipped: [{row}] Index: [{index}] (not a string)")
+                print(f"{index} Skipped: [{row}] (not a string)")
                 continue
 
             with next(get_db()) as db_session:
@@ -57,7 +57,7 @@ async def import_default_category_foods(df: pd.DataFrame) -> pd.DataFrame:
                         ),
                         db=db_session,
                     )
-                    print(f"Created: {row} ({result.id})")
+                    print(f"{index} Created: {row} ({result.id})")
 
                 system_types = pd.concat(
                     [system_types, pd.DataFrame({"description": row, "id": result.id}, index=[0])],
@@ -111,7 +111,7 @@ async def import_default_foods(df: pd.DataFrame, system_types: pd.DataFrame):
                 )
 
                 if food_category_id is None:
-                    print(f"Skipped: {row['Nome do alimento']} (category not found)")
+                    print(f"{index} Skipped: {row['Nome do alimento']} (category not found)")
                     continue
 
                 await food_interface.create_food(
@@ -126,6 +126,7 @@ async def import_default_foods(df: pd.DataFrame, system_types: pd.DataFrame):
                     food_category_id=food_category_id,
                     db=db_session,
                 )
+                print(f"{index} Created: {row['Nome do alimento']}")
 
     print("\nImported default foods.\n")
 
