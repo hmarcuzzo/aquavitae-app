@@ -31,7 +31,7 @@ class FoodCategoryService:
     ) -> Optional[FoodCategoryDto]:
         new_food_category = await self.food_category_repository.create(food_category_dto, db)
 
-        new_food_category = await self.food_category_repository.save(new_food_category, db)
+        new_food_category = self.food_category_repository.save(new_food_category, db)
         return FoodCategoryDto(**new_food_category.__dict__)
 
     async def get_all_food_category_paginated(

@@ -37,7 +37,7 @@ class ItemHasFoodService:
             tmp_item_has_food = await self.item_has_food_repository.create(food, db)
             new_item_has_foods.append(tmp_item_has_food)
 
-        new_item_has_foods = await self.item_has_food_repository.save(new_item_has_foods, db)
+        new_item_has_foods = self.item_has_food_repository.save(new_item_has_foods, db)
         return [ItemHasFoodDto(**item_has_food.__dict__) for item_has_food in new_item_has_foods]
 
     async def _update_item_has_food(

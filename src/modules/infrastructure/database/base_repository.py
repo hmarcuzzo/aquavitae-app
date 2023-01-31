@@ -298,12 +298,11 @@ class BaseRepository(Generic[T]):
         return _entity
 
     @staticmethod
-    async def save(_entity: Union[T, List[T]], db: Session = next(get_db())) -> Optional[T]:
+    def save(_entity: Union[T, List[T]] = None, db: Session = next(get_db())) -> Optional[T]:
         db.commit()
 
-        db.refresh(_entity) if not isinstance(_entity, List) else (
-            db.refresh(_en) for _en in _entity
-        )
+        if _entity:
+            BaseRepository.refresh_entity(_entity, db)
         return _entity
 
     async def delete(
@@ -312,7 +311,7 @@ class BaseRepository(Generic[T]):
         entity = await self.find_one_or_fail(criteria, db)
 
         db.delete(entity)
-        db.flush()
+        db.flush() if db.transaction.nested else db.commit()
 
         return DeleteResult(raw=[], affected=1)
 
@@ -321,7 +320,7 @@ class BaseRepository(Generic[T]):
     ) -> Optional[UpdateResult]:
         try:
             response = await self.__soft_delete_cascade(criteria, db)
-            db.commit()
+            db.flush() if db.transaction.nested else db.commit()
             return response
 
         except Exception as e:
@@ -344,5 +343,9 @@ class BaseRepository(Generic[T]):
         for key, value in partial_entity.items():
             setattr(entity, key, value)
 
-        db.commit()
+        db.flush() if db.transaction.nested else db.commit()
         return UpdateResult(raw=[], affected=1, generatedMaps=[])
+
+    @staticmethod
+    def refresh_entity(entity: Union[T, List[T]], db: Session = next(get_db())) -> None:
+        db.refresh(entity) if not isinstance(entity, List) else (db.refresh(_en) for _en in entity)

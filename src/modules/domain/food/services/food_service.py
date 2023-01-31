@@ -27,12 +27,11 @@ class FoodService:
         try:
             with force_nested_transaction_forever(db):
                 new_food = await self.food_repository.create(food_dto, db)
-                new_food = await self.food_repository.save(new_food, db)
-
                 await self.item_interface.create_item_from_food(new_food, db)
-                response = FoodDto(**new_food.__dict__)
 
-            db.commit()
+            new_food = self.food_repository.save(new_food, db)
+            response = FoodDto(**new_food.__dict__)
+            # db.commit()
             return response
         except Exception as e:
             db.rollback()

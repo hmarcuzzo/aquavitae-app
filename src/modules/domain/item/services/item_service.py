@@ -29,16 +29,14 @@ class ItemService:
                 new_item = await self.item_repository.create(
                     Item(description=item_dto.description), db
                 )
-                new_item = await self.item_repository.save(new_item, db)
 
                 new_item_foods = await self.item_has_food_interface.create_item_has_food(
                     new_item, item_dto.foods, db
                 )
 
-                response = ItemDto(**new_item.__dict__)
-                response.foods = [new_item_food.food for new_item_food in new_item_foods]
-
-            db.commit()
+            new_item = self.item_repository.save(new_item, db)
+            response = ItemDto(**new_item.__dict__)
+            response.foods = [new_item_food.food for new_item_food in new_item_foods]
             return response
         except Exception as e:
             db.rollback()

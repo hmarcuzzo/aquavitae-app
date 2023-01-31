@@ -44,32 +44,29 @@ class AnthropometricDataService:
 
         filename = None
         try:
-            db.begin_nested()
+            with db.begin_nested():
+                image = self.image_utils.valid_image64(anthropometric_data_dto.body_photo)
+                delattr(anthropometric_data_dto, "body_photo")
 
-            image = self.image_utils.valid_image64(anthropometric_data_dto.body_photo)
-            delattr(anthropometric_data_dto, "body_photo")
+                new_anthropometric_data = AnthropometricData(
+                    **anthropometric_data_dto.dict(exclude_unset=True)
+                )
+                new_anthropometric_data.id = uuid.uuid4()
 
-            new_anthropometric_data = AnthropometricData(
-                **anthropometric_data_dto.dict(exclude_unset=True)
-            )
-            new_anthropometric_data.id = uuid.uuid4()
+                filename = new_anthropometric_data.body_photo = self.image_utils.save_image(
+                    str(new_anthropometric_data.id), image
+                )
 
-            filename = new_anthropometric_data.body_photo = self.image_utils.save_image(
-                str(new_anthropometric_data.id), image
-            )
+                new_anthropometric_data = await self.anthropometric_data_repository.create(
+                    new_anthropometric_data, db
+                )
 
-            new_anthropometric_data = await self.anthropometric_data_repository.create(
-                new_anthropometric_data, db
-            )
-            new_anthropometric_data = await self.anthropometric_data_repository.save(
-                new_anthropometric_data, db
-            )
+                new_anthropometric_data_dto = deepcopy(new_anthropometric_data)
+                new_anthropometric_data_dto.body_photo = self.image_utils.get_image(
+                    new_anthropometric_data.body_photo
+                )
 
-            new_anthropometric_data_dto = deepcopy(new_anthropometric_data)
-            new_anthropometric_data_dto.body_photo = self.image_utils.get_image(
-                new_anthropometric_data.body_photo
-            )
-            response = AnthropometricDataDto(**new_anthropometric_data_dto.__dict__)
+                response = AnthropometricDataDto(**new_anthropometric_data_dto.__dict__)
 
             db.commit()
             return response
@@ -160,35 +157,35 @@ class AnthropometricDataService:
         update_anthropometric_data_dto = self.__verify_values(update_anthropometric_data_dto)
 
         try:
-            db.begin_nested()
+            with db.begin_nested():
 
-            if isinstance(update_anthropometric_data_dto, UpdateAnthropometricDataDto):
-                if "body_photo" in update_anthropometric_data_dto.dict(exclude_unset=True):
-                    image = self.image_utils.valid_image64(
-                        update_anthropometric_data_dto.body_photo
+                if isinstance(update_anthropometric_data_dto, UpdateAnthropometricDataDto):
+                    if "body_photo" in update_anthropometric_data_dto.dict(exclude_unset=True):
+                        image = self.image_utils.valid_image64(
+                            update_anthropometric_data_dto.body_photo
+                        )
+                    delattr(update_anthropometric_data_dto, "body_photo")
+
+                    anthropometric_data = (
+                        await self.anthropometric_data_repository.find_one_or_fail(
+                            anthropometric_data_id, db
+                        )
                     )
-                delattr(update_anthropometric_data_dto, "body_photo")
+                    if "image" in locals():
+                        if image:
+                            anthropometric_data.body_photo = self.image_utils.save_image(
+                                str(anthropometric_data.id), image
+                            )
+                            update_anthropometric_data_dto.body_photo = (
+                                f"{anthropometric_data.id}.{image['format']}"
+                            )
+                        else:
+                            self.image_utils.delete_image(str(anthropometric_data.body_photo))
+                            update_anthropometric_data_dto.body_photo = None
 
-                anthropometric_data = await self.anthropometric_data_repository.find_one_or_fail(
-                    anthropometric_data_id, db
-                )
-                if "image" in locals():
-                    if image:
-                        anthropometric_data.body_photo = self.image_utils.save_image(
-                            str(anthropometric_data.id), image
-                        )
-                        update_anthropometric_data_dto.body_photo = (
-                            f"{anthropometric_data.id}.{image['format']}"
-                        )
-                    else:
-                        self.image_utils.delete_image(str(anthropometric_data.body_photo))
-                        update_anthropometric_data_dto.body_photo = None
-
-            response = await self.anthropometric_data_repository.update(
+            return await self.anthropometric_data_repository.update(
                 anthropometric_data_id, update_anthropometric_data_dto, db
             )
-            db.commit()
-            return response
         except Exception as e:
             db.rollback()
             raise e

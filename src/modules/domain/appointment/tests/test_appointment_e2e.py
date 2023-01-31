@@ -33,7 +33,7 @@ class TestCreateAppointment(TestBaseE2E):
     route = f"/{CONTROLLER}/create"
 
     @pytest.mark.asyncio
-    @pytest.mark.it("Success: Create a appointment")
+    @pytest.mark.it("Success: Create an appointment")
     async def test_create_new_appointment(self, user_admin: Optional[LoginPayloadDto]) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             response = await ac.post(

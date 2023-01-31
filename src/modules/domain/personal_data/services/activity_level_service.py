@@ -31,7 +31,7 @@ class ActivityLevelService:
     ) -> Optional[ActivityLevelDto]:
         new_activity_level = await self.activity_level_repository.create(activity_level_dto, db)
 
-        new_activity_level = await self.activity_level_repository.save(new_activity_level, db)
+        new_activity_level = self.activity_level_repository.save(new_activity_level, db)
         return ActivityLevelDto(**new_activity_level.__dict__)
 
     async def get_all_activity_level_paginated(

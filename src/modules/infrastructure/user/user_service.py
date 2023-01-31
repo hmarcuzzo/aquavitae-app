@@ -38,24 +38,25 @@ class UserService:
 
         filename = None
         try:
-            db_session.begin_nested()
+            with db_session.begin_nested():
+                image = self.image_utils.valid_image64(user_dto.profile_photo)
+                delattr(user_dto, "profile_photo")
 
-            image = self.image_utils.valid_image64(user_dto.profile_photo)
-            delattr(user_dto, "profile_photo")
+                new_user = User(**user_dto.dict(exclude_unset=True))
+                new_user.id = uuid.uuid4()
 
-            new_user = User(**user_dto.dict(exclude_unset=True))
-            new_user.id = uuid.uuid4()
+                filename = new_user.profile_photo = self.image_utils.save_image(
+                    str(new_user.id), image
+                )
 
-            filename = new_user.profile_photo = self.image_utils.save_image(str(new_user.id), image)
+                new_user = await self.user_repository.create(new_user, db_session)
 
-            new_user = await self.user_repository.create(new_user, db_session)
-            new_user = await self.user_repository.save(new_user, db_session)
+            new_user = self.user_repository.save(new_user, db_session)
 
             new_user_dto = deepcopy(new_user)
             new_user_dto.profile_photo = self.image_utils.get_image(new_user.profile_photo)
-            response = UserDto(**new_user_dto.__dict__)
 
-            db_session.commit()
+            response = UserDto(**new_user_dto.__dict__)
             return response
         except Exception as e:
             self.image_utils.delete_image(filename)
@@ -104,22 +105,22 @@ class UserService:
                 raise BadRequestException(f"Email already in use.", ["User", "email"])
 
         try:
-            db_session.begin_nested()
+            with db_session.begin_nested():
+                if "profile_photo" in update_user_dto.dict(exclude_unset=True):
+                    image = self.image_utils.valid_image64(update_user_dto.profile_photo)
+                delattr(update_user_dto, "profile_photo")
 
-            if "profile_photo" in update_user_dto.dict(exclude_unset=True):
-                image = self.image_utils.valid_image64(update_user_dto.profile_photo)
-            delattr(update_user_dto, "profile_photo")
+                user = await self.user_repository.find_one_or_fail(user_id, db_session)
+                if "image" in locals():
+                    if image:
+                        user.profile_photo = self.image_utils.save_image(str(user.id), image)
+                        update_user_dto.profile_photo = f"{user.id}.{image[1]}"
+                    else:
+                        self.image_utils.delete_image(str(user.profile_photo))
+                        update_user_dto.profile_photo = None
 
-            user = await self.user_repository.find_one_or_fail(user_id, db_session)
-            if "image" in locals():
-                if image:
-                    user.profile_photo = self.image_utils.save_image(str(user.id), image)
-                    update_user_dto.profile_photo = f"{user.id}.{image[1]}"
-                else:
-                    self.image_utils.delete_image(str(user.profile_photo))
-                    update_user_dto.profile_photo = None
+                response = await self.user_repository.update(user_id, update_user_dto, db_session)
 
-            response = await self.user_repository.update(user_id, update_user_dto, db_session)
             db_session.commit()
             return response
         except Exception as e:
