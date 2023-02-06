@@ -74,3 +74,8 @@ class FoodService:
         )
 
         return FoodDto(**food.__dict__)
+
+    async def get_all_food(self, db: Session) -> Optional[list[FoodDto]]:
+        all_food = await self.food_repository.find(db=db)
+
+        return [FoodDto(**food.__dict__) for food in all_food]

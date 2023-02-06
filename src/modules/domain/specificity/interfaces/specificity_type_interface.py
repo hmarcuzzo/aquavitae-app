@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -16,8 +16,8 @@ class SpecificityTypeInterface:
         self.specificity_type_service = SpecificityTypeService()
 
     async def find_one_specificity_type_by_description(
-        self, description: str, db: Session
-    ) -> Optional[SpecificityTypeDto]:
+        self, description: List[str], db: Session
+    ) -> Optional[List[SpecificityTypeDto]]:
         return await self.specificity_type_service.find_one_specificity_type_by_description(
             description, db
         )

@@ -15,7 +15,7 @@ async def import_default_specificity_types() -> None:
         with next(get_db()) as db_session:
             try:
                 await specificity_type_interface.find_one_specificity_type_by_description(
-                    TYPE.value, db_session
+                    [TYPE.value], db_session
                 )
             except NotFoundException:
                 result = await specificity_type_interface.create_specificity_type(

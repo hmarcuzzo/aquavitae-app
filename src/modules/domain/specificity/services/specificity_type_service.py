@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
+from src.core.types.exceptions_type import NotFoundException
 from src.modules.domain.specificity.dto.specificity_type.create_specificity_type_dto import (
     CreateSpecificityTypeDto,
 )
@@ -22,16 +23,19 @@ class SpecificityTypeService:
 
     # ---------------------- INTERFACE METHODS ----------------------
     async def find_one_specificity_type_by_description(
-        self, description: str, db: Session
-    ) -> Optional[SpecificityTypeDto]:
-        specificity_type = await self.specificity_type_repository.find_one_or_fail(
+        self, description: List[str], db: Session
+    ) -> Optional[List[SpecificityTypeDto]]:
+        specificity_types = await self.specificity_type_repository.find(
             {
-                "where": SpecificityType.description == description,
+                "where": [SpecificityType.description.in_(description)],
             },
             db,
         )
 
-        return SpecificityTypeDto(**specificity_type.__dict__)
+        if len(specificity_types) == 0:
+            raise NotFoundException(msg="No Specificity Type of any kind found")
+
+        return [SpecificityTypeDto(**st.__dict__) for st in specificity_types]
 
     async def create_specificity_type(
         self, specificity_type_dto: CreateSpecificityTypeDto, db: Session
