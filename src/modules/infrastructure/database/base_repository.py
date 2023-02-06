@@ -15,7 +15,7 @@ from src.core.utils.database_utils import DatabaseUtils
 from . import get_db
 from .base import Base
 from .repository_methods.query_constructor import QueryConstructor
-from .soft_delete_filter import is_with_deleted_data, pause_listener
+from .soft_delete_filter import pause_listener
 
 T = TypeVar("T")
 
@@ -170,7 +170,7 @@ class BaseRepository(Generic[T]):
 
             if (
                 result
-                and not is_with_deleted_data(options_dict)
+                and not DatabaseUtils.is_with_deleted_data(options_dict)
                 and DatabaseUtils.should_apply_filter(
                     query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
                 )
@@ -193,7 +193,7 @@ class BaseRepository(Generic[T]):
 
             if (
                 result
-                and not is_with_deleted_data(options_dict)
+                and not DatabaseUtils.is_with_deleted_data(options_dict)
                 and DatabaseUtils.should_apply_filter(
                     query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
                 )
@@ -209,7 +209,7 @@ class BaseRepository(Generic[T]):
         self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[T]:
         query = self.query_constructor.build_query(db, criteria)
-        with_deleted = is_with_deleted_data(
+        with_deleted = DatabaseUtils.is_with_deleted_data(
             criteria if not isinstance(criteria, (str, int)) else False
         )
 
@@ -218,7 +218,7 @@ class BaseRepository(Generic[T]):
 
             if (
                 result
-                and not is_with_deleted_data(with_deleted)
+                and not DatabaseUtils.is_with_deleted_data(with_deleted)
                 and DatabaseUtils.should_apply_filter(
                     query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
                 )

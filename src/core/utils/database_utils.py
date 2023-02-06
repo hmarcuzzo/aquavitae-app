@@ -4,6 +4,9 @@ from sqlalchemy import Column
 from sqlalchemy.orm import Query
 from sqlalchemy.sql.elements import BinaryExpression, BooleanClauseList
 
+from src.core.types.find_many_options_type import FindManyOptions
+from src.core.types.find_one_options_type import FindOneOptions
+
 
 class DatabaseUtils:
     @staticmethod
@@ -24,14 +27,12 @@ class DatabaseUtils:
 
     @staticmethod
     def get_where_clauses(
-            whereclause: Union[BooleanClauseList, BinaryExpression, List[Any]]
+        whereclause: Union[BooleanClauseList, BinaryExpression, List[Any]]
     ) -> List[Column]:
         clauses = []
 
         if whereclause is not None:
-            if not (
-                    isinstance(whereclause, BooleanClauseList) or isinstance(whereclause, List)
-            ):
+            if not (isinstance(whereclause, BooleanClauseList) or isinstance(whereclause, List)):
                 whereclause = [whereclause]
 
             for clause in whereclause:
@@ -43,3 +44,10 @@ class DatabaseUtils:
                     clauses.append(clause)
 
         return clauses
+
+    @staticmethod
+    def is_with_deleted_data(condition: Union[FindOneOptions, FindManyOptions, bool]) -> bool:
+        if isinstance(condition, bool):
+            return condition
+
+        return condition["with_deleted"] if "with_deleted" in condition else False

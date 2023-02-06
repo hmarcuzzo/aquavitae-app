@@ -16,7 +16,7 @@ class PauseListener:
 
     @contextlib.contextmanager
     def pause(self, condition: Union[FindOneOptions, FindManyOptions, bool] = True):
-        self.paused = is_with_deleted_data(condition)
+        self.paused = DatabaseUtils.is_with_deleted_data(condition)
         yield
         self.paused = False
 
@@ -49,10 +49,3 @@ def no_deleted(query: Query) -> Query:
         query = query.enable_assertions(False).where(column == null())
 
     return query
-
-
-def is_with_deleted_data(condition: Union[FindOneOptions, FindManyOptions, bool]) -> bool:
-    if isinstance(condition, bool):
-        return condition
-
-    return condition["with_deleted"] if "with_deleted" in condition else False
