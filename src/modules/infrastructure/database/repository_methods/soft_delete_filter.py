@@ -16,7 +16,11 @@ class PauseListener:
 
     @contextlib.contextmanager
     def pause(self, condition: Union[FindOneOptions, FindManyOptions, bool] = True):
-        self.paused = DatabaseUtils.is_with_deleted_data(condition)
+        self.paused = (
+            condition
+            if isinstance(condition, bool)
+            else DatabaseUtils.is_with_deleted_data(condition)
+        )
         yield
         self.paused = False
 

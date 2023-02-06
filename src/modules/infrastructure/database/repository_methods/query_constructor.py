@@ -56,8 +56,6 @@ class QueryConstructor:
                 query = query.limit(options_dict[key])
             elif key == "relations":
                 query = query.options(subqueryload(getattr(entity, *options_dict[key])))
-            elif key == "with_deleted":
-                continue
             else:
                 raise KeyError(f"Unknown option: {key} in FindOptions")
 

@@ -10,7 +10,7 @@ from src.core.types.find_one_options_type import FindOneOptions
 
 class DatabaseUtils:
     @staticmethod
-    def get_column_represent_deleted(columns: List[Column]) -> Column:
+    def get_column_represent_deleted(columns: List[Column]) -> Union[Column, None]:
         for column in columns:
             if "delete_column" in column.info and column.info["delete_column"]:
                 return column
@@ -46,8 +46,11 @@ class DatabaseUtils:
         return clauses
 
     @staticmethod
-    def is_with_deleted_data(condition: Union[FindOneOptions, FindManyOptions, bool]) -> bool:
-        if isinstance(condition, bool):
-            return condition
+    def is_with_deleted_data(condition: Union[FindOneOptions, FindManyOptions]) -> bool:
+        is_with_deleted_data = False
 
-        return condition["with_deleted"] if "with_deleted" in condition else False
+        if "with_deleted" in condition:
+            is_with_deleted_data = condition["with_deleted"]
+            del condition["with_deleted"]
+
+        return is_with_deleted_data

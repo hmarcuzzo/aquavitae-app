@@ -15,7 +15,7 @@ from src.core.utils.database_utils import DatabaseUtils
 from . import get_db
 from .base import Base
 from .repository_methods.query_constructor import QueryConstructor
-from .soft_delete_filter import pause_listener
+from .repository_methods.soft_delete_filter import pause_listener
 
 T = TypeVar("T")
 
@@ -31,11 +31,15 @@ class BaseRepository(Generic[T]):
     def __get_repository_from_foreign_keys(
         self, entity_data: Union[BaseModel, dict]
     ) -> List[Tuple["BaseRepository", str, Any]]:
-        columns = get_columns(self.entity)
+        foreign_keys = {
+            column.key: column for column in get_columns(self.entity) if column.foreign_keys
+        }
 
         for key, value in entity_data.items():
-            if key in columns and columns[key].foreign_keys:
-                referred_table = next(iter(columns[key].foreign_keys)).constraint.referred_table
+            if key in foreign_keys:
+                referred_table = next(
+                    iter(foreign_keys[key].foreign_keys)
+                ).constraint.referred_table
 
                 referred_repository = BaseRepository(get_class_by_table(Base, referred_table))
                 yield referred_repository, key, value
@@ -43,12 +47,14 @@ class BaseRepository(Generic[T]):
     async def __is_relations_valid(
         self, db: Session, partial_entity: Union[BaseModel, dict]
     ) -> bool:
-        columns = get_columns(self.entity)
+        foreign_keys = {
+            column.key: column for column in get_columns(self.entity) if column.foreign_keys
+        }
 
         for referred_repository, key, value in self.__get_repository_from_foreign_keys(
             partial_entity
         ):
-            if not value and columns[key].nullable:
+            if not value and foreign_keys[key].nullable:
                 continue
             await referred_repository.find_one_or_fail(str(value), db)
 
@@ -163,9 +169,8 @@ class BaseRepository(Generic[T]):
     async def find(
         self, options_dict: FindManyOptions = None, db: Session = next(get_db())
     ) -> Optional[List[T]]:
-        query = self.query_constructor.build_query(db, options_dict)
-
         with pause_listener.pause(options_dict):
+            query = self.query_constructor.build_query(db, options_dict)
             result = query.all()
 
             if (
@@ -185,9 +190,8 @@ class BaseRepository(Generic[T]):
     async def find_and_count(
         self, options_dict: FindManyOptions = None, db: Session = next(get_db())
     ) -> Optional[Tuple[List[T], int]]:
-        query = self.query_constructor.build_query(db, options_dict)
-
         with pause_listener.pause(options_dict):
+            query = self.query_constructor.build_query(db, options_dict)
             count = query.offset(None).limit(None).count()
             result = query.all()
 
@@ -205,20 +209,20 @@ class BaseRepository(Generic[T]):
 
             return result, count
 
-    async def find_one(
-        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
-    ) -> Optional[T]:
-        query = self.query_constructor.build_query(db, criteria)
-        with_deleted = DatabaseUtils.is_with_deleted_data(
-            criteria if not isinstance(criteria, (str, int)) else False
+    async def find_one(self, criteria: Union[str, int, FindOneOptions], db: Session) -> Optional[T]:
+        with_deleted = (
+            DatabaseUtils.is_with_deleted_data(criteria)
+            if not isinstance(criteria, (str, int))
+            else False
         )
 
         with pause_listener.pause(with_deleted):
+            query = self.query_constructor.build_query(db, criteria)
             result = query.first()
 
             if (
                 result
-                and not DatabaseUtils.is_with_deleted_data(with_deleted)
+                and not with_deleted
                 and DatabaseUtils.should_apply_filter(
                     query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
                 )
@@ -228,7 +232,7 @@ class BaseRepository(Generic[T]):
             return result
 
     async def find_one_or_fail(
-        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
+        self, criteria: Union[str, int, FindOneOptions], db: Session
     ) -> Optional[T]:
         result = await self.find_one(criteria, db)
 
@@ -238,7 +242,7 @@ class BaseRepository(Generic[T]):
 
         return result
 
-    async def create(self, _entity: Union[T, BaseModel], db: Session = next(get_db())) -> T:
+    async def create(self, _entity: Union[T, BaseModel], db: Session) -> T:
         if isinstance(_entity, BaseModel):
             partial_data_entity = _entity.dict(exclude_unset=True)
             _entity = self.entity(**partial_data_entity)
@@ -258,7 +262,7 @@ class BaseRepository(Generic[T]):
         return _entity
 
     async def delete(
-        self, db: Session, criteria: Union[str, int, FindOneOptions]
+        self, criteria: Union[str, int, FindOneOptions], db: Session
     ) -> Optional[DeleteResult]:
         entity = await self.find_one_or_fail(criteria, db)
 
@@ -268,7 +272,7 @@ class BaseRepository(Generic[T]):
         return DeleteResult(raw=[], affected=1)
 
     async def soft_delete(
-        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
+        self, criteria: Union[str, int, FindOneOptions], db: Session
     ) -> Optional[UpdateResult]:
         try:
             response = await self.__soft_delete_cascade(criteria, db)
@@ -283,7 +287,7 @@ class BaseRepository(Generic[T]):
         self,
         criteria: Union[str, int, FindOneOptions],
         partial_entity: Union[BaseModel, dict],
-        db: Session = next(get_db()),
+        db: Session,
     ) -> Optional[UpdateResult]:
         entity = await self.find_one_or_fail(criteria, db)
 
@@ -299,8 +303,6 @@ class BaseRepository(Generic[T]):
         return UpdateResult(raw=[], affected=1, generatedMaps=[])
 
     @staticmethod
-    def refresh_entity(
-        entity: Union[T, List[T]], db: Session = next(get_db())
-    ) -> Union[T, List[T]]:
+    def refresh_entity(entity: Union[T, List[T]], db: Session) -> Union[T, List[T]]:
         db.refresh(entity) if not isinstance(entity, List) else (db.refresh(_en) for _en in entity)
         return entity
