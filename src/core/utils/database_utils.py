@@ -27,21 +27,23 @@ class DatabaseUtils:
 
     @staticmethod
     def get_where_clauses(
-        whereclause: Union[BooleanClauseList, BinaryExpression, List[Any]]
+        whereclauses: Union[BooleanClauseList, BinaryExpression, List[Any]]
     ) -> List[Column]:
+        if whereclauses is None:
+            return []
+
         clauses = []
 
-        if whereclause is not None:
-            if not (isinstance(whereclause, BooleanClauseList) or isinstance(whereclause, List)):
-                whereclause = [whereclause]
+        if isinstance(whereclauses, BinaryExpression):
+            whereclauses = [whereclauses]
 
-            for clause in whereclause:
-                if hasattr(clause, "left"):
-                    clauses += DatabaseUtils.get_where_clauses([clause.left])
-                elif hasattr(clause, "clause"):
-                    clauses += DatabaseUtils.get_where_clauses([clause.clause])
-                else:
-                    clauses.append(clause)
+        for clause in whereclauses:
+            if hasattr(clause, "left"):
+                clauses += DatabaseUtils.get_where_clauses([clause.left])
+            elif hasattr(clause, "clause"):
+                clauses += DatabaseUtils.get_where_clauses([clause.clause])
+            else:
+                clauses.append(clause)
 
         return clauses
 
