@@ -10,7 +10,7 @@ from src.modules.domain.item.entities.item_entity import Item
 from src.modules.domain.item.entities.item_has_food_entity import ItemHasFood
 from src.modules.domain.item.repositories.item_has_food_repository import ItemHasFoodRepository
 from src.modules.domain.item.repositories.item_repository import ItemRepository
-from src.modules.infrastructure.database.control_transaction import force_nested_transaction_forever
+from src.modules.infrastructure.database.control_transaction import keep_nested_transaction
 
 
 class ItemHasFoodService:
@@ -50,7 +50,7 @@ class ItemHasFoodService:
 
         response = UpdateResult(raw=[], affected=0, generatedMaps=[])
 
-        with force_nested_transaction_forever(db):
+        with keep_nested_transaction(db):
             for new_food in update_item_has_foods:
                 if new_food.food_id in item_foods_id:
                     # Update foods in the new foods list

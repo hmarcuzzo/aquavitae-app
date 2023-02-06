@@ -14,7 +14,7 @@ from src.modules.domain.food.dto.food.update_food_dto import UpdateFoodDto
 from src.modules.domain.food.entities.food_entity import Food
 from src.modules.domain.food.repositories.food_repository import FoodRepository
 from src.modules.domain.item.interfaces.item_interface import ItemInterface
-from src.modules.infrastructure.database.control_transaction import force_nested_transaction_forever
+from src.modules.infrastructure.database.control_transaction import keep_nested_transaction
 
 
 class FoodService:
@@ -25,7 +25,7 @@ class FoodService:
     # ---------------------- PUBLIC METHODS ----------------------
     async def create_food(self, food_dto: CreateFoodDto, db: Session) -> Optional[FoodDto]:
         try:
-            with force_nested_transaction_forever(db):
+            with keep_nested_transaction(db):
                 new_food = await self.food_repository.create(food_dto, db)
                 await self.item_interface.create_item_from_food(new_food, db)
 

@@ -1,9 +1,12 @@
 import contextlib
+from typing import Union
 
-from sqlalchemy import event
+from sqlalchemy import event, null
 from sqlalchemy.orm import DeclarativeMeta, Query
 from sqlalchemy_utils import get_columns
 
+from src.core.types.find_many_options_type import FindManyOptions
+from src.core.types.find_one_options_type import FindOneOptions
 from src.core.utils.database_utils import DatabaseUtils
 
 
@@ -12,8 +15,8 @@ class PauseListener:
         self.paused = False
 
     @contextlib.contextmanager
-    def pause(self, condition: bool = True):
-        self.paused = condition
+    def pause(self, condition: Union[FindOneOptions, FindManyOptions, bool] = True):
+        self.paused = is_with_deleted_data(condition)
         yield
         self.paused = False
 
@@ -43,6 +46,13 @@ def no_deleted(query: Query) -> Query:
         if not DatabaseUtils.should_apply_filter(query, column):
             return query
 
-        query = query.enable_assertions(False).where(column == None)
+        query = query.enable_assertions(False).where(column == null())
 
     return query
+
+
+def is_with_deleted_data(condition: Union[FindOneOptions, FindManyOptions, bool]) -> bool:
+    if isinstance(condition, bool):
+        return condition
+
+    return condition["with_deleted"] if "with_deleted" in condition else False

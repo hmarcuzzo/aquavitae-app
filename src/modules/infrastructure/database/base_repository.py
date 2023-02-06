@@ -3,7 +3,7 @@ from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import load_only, Query, Session, subqueryload
+from sqlalchemy.orm import Session
 from sqlalchemy_utils import get_class_by_table, get_columns
 
 from src.core.types.delete_result_type import DeleteResult
@@ -14,7 +14,8 @@ from src.core.types.update_result_type import UpdateResult
 from src.core.utils.database_utils import DatabaseUtils
 from . import get_db
 from .base import Base
-from .soft_delete_filter import pause_listener
+from .repository_methods.query_constructor import QueryConstructor
+from .soft_delete_filter import is_with_deleted_data, pause_listener
 
 T = TypeVar("T")
 
@@ -24,51 +25,9 @@ class BaseRepository(Generic[T]):
 
     def __init__(self, entity: T):
         self.entity = entity
-        self.with_deleted = False
+        self.query_constructor = QueryConstructor(entity)
 
     # ----------- PRIVATE METHODS -----------
-    def __apply_options(
-        self, query: Query, options_dict: Union[FindManyOptions, FindManyOptions] = None
-    ) -> Query:
-        if not options_dict:
-            return query
-
-        options_dict = self.__fix_options_dict(options_dict)
-        query = query.enable_assertions(False)
-
-        for key in options_dict.keys():
-            if key == "select":
-                query = query.options(load_only(*options_dict[key]))
-            elif key == "where":
-                query = query.where(*options_dict[key])
-            elif key == "order_by":
-                query = query.order_by(*options_dict[key])
-            elif key == "skip":
-                query = query.offset(options_dict[key])
-            elif key == "take":
-                query = query.limit(options_dict[key])
-            elif key == "relations":
-                query = query.options(subqueryload(getattr(self.entity, *options_dict[key])))
-            elif key == "with_deleted":
-                self.with_deleted = options_dict[key]
-            else:
-                raise KeyError(f"Unknown option: {key} in FindOptions")
-
-        return query
-
-    @staticmethod
-    def __fix_options_dict(
-        options_dict: Union[FindManyOptions, FindOneOptions]
-    ) -> Union[FindManyOptions, FindOneOptions]:
-        for attribute in ["where", "order_by", "options"]:
-            if attribute in options_dict and not isinstance(options_dict[attribute], list):
-                options_dict[attribute] = [options_dict[attribute]]
-
-        return options_dict
-
-    def __generate_find_one_options_dict(self, criteria: Union[str, int]) -> FindOneOptions:
-        return {"where": [inspect(self.entity).primary_key[0] == criteria]}
-
     def __get_repository_from_foreign_keys(
         self, entity_data: Union[BaseModel, dict]
     ) -> List[Tuple["BaseRepository", str, Any]]:
@@ -204,15 +163,14 @@ class BaseRepository(Generic[T]):
     async def find(
         self, options_dict: FindManyOptions = None, db: Session = next(get_db())
     ) -> Optional[List[T]]:
-        query = db.query(self.entity)
+        query = self.query_constructor.build_query(db, options_dict)
 
-        query = self.__apply_options(query, options_dict)
-        with pause_listener.pause(self.with_deleted):
+        with pause_listener.pause(options_dict):
             result = query.all()
 
             if (
                 result
-                and not self.with_deleted
+                and not is_with_deleted_data(options_dict)
                 and DatabaseUtils.should_apply_filter(
                     query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
                 )
@@ -222,22 +180,20 @@ class BaseRepository(Generic[T]):
                     for element in result
                 ]
 
-            self.with_deleted = False
             return result
 
     async def find_and_count(
         self, options_dict: FindManyOptions = None, db: Session = next(get_db())
     ) -> Optional[Tuple[List[T], int]]:
-        query = db.query(self.entity)
+        query = self.query_constructor.build_query(db, options_dict)
 
-        query = self.__apply_options(query, options_dict)
-        with pause_listener.pause(self.with_deleted):
+        with pause_listener.pause(options_dict):
             count = query.offset(None).limit(None).count()
             result = query.all()
 
             if (
                 result
-                and not self.with_deleted
+                and not is_with_deleted_data(options_dict)
                 and DatabaseUtils.should_apply_filter(
                     query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
                 )
@@ -247,31 +203,28 @@ class BaseRepository(Generic[T]):
                     for element in result
                 ]
 
-            self.with_deleted = False
             return result, count
 
     async def find_one(
         self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
     ) -> Optional[T]:
-        query = db.query(self.entity)
+        query = self.query_constructor.build_query(db, criteria)
+        with_deleted = is_with_deleted_data(
+            criteria if not isinstance(criteria, (str, int)) else False
+        )
 
-        if isinstance(criteria, (str, int)):
-            criteria = self.__generate_find_one_options_dict(criteria)
-        query = self.__apply_options(query, criteria)
-
-        with pause_listener.pause(self.with_deleted):
+        with pause_listener.pause(with_deleted):
             result = query.first()
 
             if (
                 result
-                and not self.with_deleted
+                and not is_with_deleted_data(with_deleted)
                 and DatabaseUtils.should_apply_filter(
                     query, DatabaseUtils.get_column_represent_deleted(get_columns(self.entity))
                 )
             ):
                 result = await self.__remove_deleted_relations(db, result, criteria)
 
-            self.with_deleted = False
             return result
 
     async def find_one_or_fail(
@@ -305,7 +258,7 @@ class BaseRepository(Generic[T]):
         return _entity
 
     async def delete(
-        self, criteria: Union[str, int, FindOneOptions], db: Session = next(get_db())
+        self, db: Session, criteria: Union[str, int, FindOneOptions]
     ) -> Optional[DeleteResult]:
         entity = await self.find_one_or_fail(criteria, db)
 
@@ -346,5 +299,8 @@ class BaseRepository(Generic[T]):
         return UpdateResult(raw=[], affected=1, generatedMaps=[])
 
     @staticmethod
-    def refresh_entity(entity: Union[T, List[T]], db: Session = next(get_db())) -> None:
+    def refresh_entity(
+        entity: Union[T, List[T]], db: Session = next(get_db())
+    ) -> Union[T, List[T]]:
         db.refresh(entity) if not isinstance(entity, List) else (db.refresh(_en) for _en in entity)
+        return entity

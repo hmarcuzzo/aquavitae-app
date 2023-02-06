@@ -14,7 +14,7 @@ from src.modules.domain.item.dto.item.update_item_dto import UpdateItemDto
 from src.modules.domain.item.entities.item_entity import Item
 from src.modules.domain.item.interfaces.item_has_food_interface import ItemHasFoodInterface
 from src.modules.domain.item.repositories.item_repository import ItemRepository
-from src.modules.infrastructure.database.control_transaction import force_nested_transaction_forever
+from src.modules.infrastructure.database.control_transaction import keep_nested_transaction
 
 
 class ItemService:
@@ -25,7 +25,7 @@ class ItemService:
     # ---------------------- PUBLIC METHODS ----------------------
     async def create_item(self, item_dto: CreateItemDto, db: Session) -> Optional[ItemDto]:
         try:
-            with force_nested_transaction_forever(db):
+            with keep_nested_transaction(db):
                 new_item = await self.item_repository.create(
                     Item(description=item_dto.description), db
                 )
@@ -68,7 +68,7 @@ class ItemService:
         self, id: str, update_food_dto: UpdateItemDto, db: Session
     ) -> Optional[UpdateResult]:
         try:
-            with force_nested_transaction_forever(db):
+            with keep_nested_transaction(db):
                 list_foods = update_food_dto.foods
                 del update_food_dto.foods
 

@@ -1,17 +1,18 @@
 import contextlib
 
 from sqlalchemy import event
+from sqlalchemy.orm import Session, SessionTransaction
 
 
 @contextlib.contextmanager
-def force_nested_transaction_forever(session, commit_on_complete=True):
+def keep_nested_transaction(session: Session, commit_on_complete: bool = True) -> None:
     """
     Keep re-entering a nested transaction everytime a transaction ends.
     """
     d = {"nested": session.begin_nested()}
 
     @event.listens_for(session, "after_transaction_end")
-    def end_savepoint(session, transaction):
+    def end_savepoint(session: Session, transaction: SessionTransaction) -> None:
         # Start another nested trans if the prior one is no longer active.
         if not d["nested"].is_active:
             d["nested"] = session.begin_nested()
