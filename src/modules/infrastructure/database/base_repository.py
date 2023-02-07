@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel
@@ -15,6 +14,7 @@ from src.core.utils.database_utils import DatabaseUtils
 from . import get_db
 from .base import Base
 from .repository_methods.query_constructor import QueryConstructor
+from .repository_methods.soft_delete import SoftDelete
 from .repository_methods.soft_delete_filter import pause_listener
 
 T = TypeVar("T")
@@ -173,47 +173,69 @@ class BaseRepository(Generic[T]):
     async def __remove_deleted_relations(
         self, db: Session, result: T, options_dict: FindManyOptions = None
     ) -> T:
-        result_class = inspect(result).class_
+        result_class = type(result)
         result_relationships = inspect(result_class).relationships
+
         for key, relation_property in result_relationships.items():
-            if (
-                not options_dict
-                or "relations" not in options_dict
-                or key not in options_dict["relations"]
-            ):
-                for (
-                    referred_repository,
-                    f_key,
-                    value,
-                ) in self.__get_repository_from_foreign_keys(result.__dict__):
+            if self.__should_remove_relation(key, options_dict):
+                for referred_repository, f_key, value in self.__get_repository_from_foreign_keys(
+                    result.__dict__
+                ):
                     if value:
-                        _entity = await referred_repository.find_one(str(value), db)
+                        _entity = await referred_repository.find_one(
+                            str(value), db
+                        )  # TODO: it's not necessary to use find_one, just write a query manually
 
                         if _entity is None:
                             setattr(result, f_key, None)
 
             else:
                 if getattr(result, key):
-                    column = DatabaseUtils.get_column_represent_deleted(get_columns(result_class))
-                    if not isinstance(getattr(result, key), list):
-                        if getattr(getattr(result, key), column.description):
-                            setattr(result, key, None)
-                        else:
-                            new_result_key = await self.__remove_deleted_relations(
-                                db, getattr(result, key), options_dict
-                            )
-                            setattr(result, key, new_result_key)
-                    else:
-                        for index, element in enumerate(getattr(result, key)):
-                            if getattr(element, column.description):
-                                del getattr(result, key)[index]
-                            else:
-                                new_result_key = await self.__remove_deleted_relations(
-                                    db, element, options_dict
-                                )
-                                getattr(result, key)[index] = new_result_key
+                    await self.__remove_deleted_relations_from_attribute(
+                        db, result, key, options_dict
+                    )
 
         return result
+
+    @staticmethod
+    def __should_remove_relation(relation_key: str, options_dict: FindManyOptions) -> bool:
+        if not options_dict or "relations" not in options_dict:
+            return True
+
+        return relation_key not in options_dict["relations"]
+
+    async def __remove_deleted_relations_from_attribute(
+        self, db: Session, result: T, attribute_key: str, options_dict: FindManyOptions
+    ) -> None:
+        attribute_value = getattr(result, attribute_key)
+        if not isinstance(attribute_value, list):
+            await self.__remove_deleted_relations_from_single_value(
+                db, result, attribute_key, options_dict
+            )
+        else:
+            await self.__remove_deleted_relations_from_list(result, attribute_key)
+
+    async def __remove_deleted_relations_from_single_value(
+        self, db: Session, result: T, attribute_key: str, options_dict: FindManyOptions
+    ) -> None:
+        single_value = getattr(result, attribute_key)
+        if DatabaseUtils.is_deleted(single_value):
+            setattr(result, attribute_key, None)
+        else:
+            new_result_key = await self.__remove_deleted_relations(db, single_value, options_dict)
+            setattr(result, attribute_key, new_result_key)
+
+    @staticmethod
+    async def __remove_deleted_relations_from_list(result: T, attribute_key: str) -> None:
+        attribute_list = getattr(result, attribute_key)
+        # new_list = [
+        #     await self.__remove_deleted_relations(db, element, options_dict)
+        #     for element in attribute_list
+        #     if not DatabaseUtils.is_deleted(element)
+        # ]
+        new_list = [element for element in attribute_list if not DatabaseUtils.is_deleted(element)]
+
+        setattr(result, attribute_key, new_list)
 
     def __get_repository_from_foreign_keys(
         self, entity_data: Union[BaseModel, dict]
@@ -247,44 +269,21 @@ class BaseRepository(Generic[T]):
 
         return True
 
-    @staticmethod
-    def __get_cascade_relations(entity: T) -> List[Any]:
-        cascade_relations = []
-
-        for relation in inspect(inspect(entity).class_).relationships:
-            delete_column = DatabaseUtils.get_column_represent_deleted(
-                get_columns(relation.mapper.class_)
-            )
-            if delete_column is None:
-                raise ValueError(f'Relation "{relation.key}" has no "deleted" column')
-
-            cr = getattr(entity, relation.key)
-            if cr and relation.cascade.delete_orphan:
-                if not isinstance(cr, List):
-                    cr = [cr]
-
-                cascade_relations.extend(
-                    cascade_relation
-                    for cascade_relation in cr
-                    if not getattr(cascade_relation, delete_column.name, True)
-                )
-
-        return cascade_relations
-
     async def __soft_delete_cascade(
         self, criteria: Union[str, int, FindOneOptions], db: Session
     ) -> Optional[UpdateResult]:
         entity = await self.find_one_or_fail(criteria, db)
 
         rowcount = await self.__soft_delete_cascade_relations(entity, db)
-        rowcount += self.__soft_delete_entity(entity, db)
+        rowcount += SoftDelete.soft_delete_entity(entity, db)
 
         return UpdateResult(raw=[], affected=rowcount, generatedMaps=[])
 
-    async def __soft_delete_cascade_relations(self, entity: T, db: Session) -> int:
+    @staticmethod
+    async def __soft_delete_cascade_relations(entity: T, db: Session) -> int:
         rowcount = 0
 
-        cascade_entities = self.__get_cascade_relations(entity)
+        cascade_entities = DatabaseUtils.get_cascade_relations(entity)
         for cascade_entity in cascade_entities:
             result = await BaseRepository(inspect(cascade_entity).class_).__soft_delete_cascade(
                 str(cascade_entity.id), db
@@ -292,18 +291,3 @@ class BaseRepository(Generic[T]):
             rowcount += result["affected"]
 
         return rowcount
-
-    @staticmethod
-    def __soft_delete_entity(entity: T, db: Session) -> int:
-        entity_class = inspect(entity).class_
-        delete_column = DatabaseUtils.get_column_represent_deleted(get_columns(entity_class))
-        if delete_column is None:
-            raise ValueError(f'Entity "{entity_class.__name__}" has no "deleted" column')
-
-        if not getattr(entity, delete_column.name):
-            setattr(entity, delete_column.name, datetime.now())
-            db.flush()
-
-            return 1
-
-        return 0

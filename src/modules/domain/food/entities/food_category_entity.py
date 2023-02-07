@@ -20,7 +20,6 @@ class FoodCategory(BaseEntity):
         primaryjoin="food_category.c.id==food_category.c.food_category_id",
         remote_side="food_category.c.id",
         backref=backref("children"),
-        lazy="select",
     )
 
     foods = relationship("Food", back_populates="food_category", cascade="all, delete-orphan")

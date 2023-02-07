@@ -1,11 +1,15 @@
-from typing import Any, List, Union
+from typing import Any, List, TypeVar, Union
 
-from sqlalchemy import Column
+from sqlalchemy import Column, inspect
 from sqlalchemy.orm import Query
 from sqlalchemy.sql.elements import BinaryExpression, BooleanClauseList
+from sqlalchemy_utils import get_columns
 
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
+
+
+T = TypeVar("T")
 
 
 class DatabaseUtils:
@@ -56,3 +60,33 @@ class DatabaseUtils:
             del condition["with_deleted"]
 
         return is_with_deleted_data
+
+    @staticmethod
+    def is_deleted(element: T) -> bool:
+        result_class = type(element)
+        deleted_column = DatabaseUtils.get_column_represent_deleted(get_columns(result_class))
+        return getattr(element, str(deleted_column.description))
+
+    @staticmethod
+    def get_cascade_relations(entity: T) -> List[Any]:
+        cascade_relations = []
+
+        for relation in inspect(type(entity)).relationships:
+            delete_column = DatabaseUtils.get_column_represent_deleted(
+                get_columns(relation.mapper.class_)
+            )
+            if delete_column is None:
+                raise ValueError(f'Relation "{relation.key}" has no "deleted" column')
+
+            cr = getattr(entity, relation.key)
+            if cr and relation.cascade.delete_orphan:
+                if not isinstance(cr, List):
+                    cr = [cr]
+
+                cascade_relations.extend(
+                    cascade_relation
+                    for cascade_relation in cr
+                    if not getattr(cascade_relation, delete_column.name, True)
+                )
+
+        return cascade_relations
