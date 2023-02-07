@@ -55,7 +55,7 @@ class FoodCategoryService:
         food_category = await self.food_category_repository.find_one_or_fail(
             {
                 "where": FoodCategory.id == food_category_id,
-                "relations": ["food_category"],
+                "relations": ["parent"],
             },
             db,
         )

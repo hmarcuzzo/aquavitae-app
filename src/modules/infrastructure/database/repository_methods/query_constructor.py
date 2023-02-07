@@ -1,7 +1,7 @@
 from typing import TypeVar, Union
 
 from sqlalchemy import inspect
-from sqlalchemy.orm import load_only, Query, Session, subqueryload
+from sqlalchemy.orm import load_only, Query, selectinload, Session, subqueryload
 
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions

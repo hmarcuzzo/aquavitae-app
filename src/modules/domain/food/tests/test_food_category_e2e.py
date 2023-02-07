@@ -73,14 +73,14 @@ class TestCreateFoodCategory(TestBaseE2E):
         data = response.json()
 
         assert response.status_code == HTTP_201_CREATED
-        assert data["food_category"] is None
+        assert data["parent"] is None
 
         activity_level_dto = await food_category_service.find_one_food_category(
             data["id"], self.db_test_utils.db
         )
 
         assert activity_level_dto is not None
-        assert activity_level_dto.food_category is None
+        assert activity_level_dto.parent is None
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a food category with deleted relation")
@@ -150,7 +150,7 @@ class TestGetAllFoodCategories(TestBaseE2E):
             response = await ac.get(
                 self.route,
                 headers={"Authorization": f"Bearer {user_admin.access_token}"},
-                params={"columns": ["food_category"]},
+                params={"columns": ["parent"]},
             )
 
         body = response.json()
@@ -163,15 +163,13 @@ class TestGetAllFoodCategories(TestBaseE2E):
             if food_category["id"] == "75827c83-d4cb-46cb-a092-9ba2dd962023":
                 assert food_category["description"] == "Level 2"
                 assert food_category["level"] == 2
-                assert food_category["food_category"] is None
+                assert food_category["parent"] is None
 
             if food_category["id"] == "90e719b0-0f32-4236-82e7-033e2deae8fd":
                 assert food_category["description"] == "Level 3"
                 assert food_category["level"] == 3
-                assert (
-                    food_category["food_category"]["id"] == "75827c83-d4cb-46cb-a092-9ba2dd962023"
-                )
-                assert food_category["food_category"]["food_category"] is None
+                assert food_category["parent"]["id"] == "75827c83-d4cb-46cb-a092-9ba2dd962023"
+                assert food_category["parent"]["parent"] is None
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get a list of all food categories without authentication")
@@ -210,7 +208,7 @@ class TestGetFoodCategoryById(TestBaseE2E):
         assert data["id"] == food_category_item["id"]
         assert data["description"] == food_category_item["description"]
         assert data["level"] == food_category_item["level"]
-        assert data["food_category"] is None
+        assert data["parent"] is None
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get one food category without authentication")

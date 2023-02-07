@@ -19,9 +19,11 @@ class Food(BaseEntity):
     sodium: Float(2) = Column(Float(2), nullable=False)
 
     food_category_id: UUID = Column(
-        UUID(as_uuid=True), ForeignKey("food_category.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("food_category.id", ondelete="CASCADE"),
+        nullable=False,
     )
-    food_category = relationship("FoodCategory", back_populates="foods")
+    food_category = relationship("FoodCategory", back_populates="foods", lazy="select")
 
     specificities = relationship(
         "Specificity", back_populates="food", uselist=True, cascade="all, delete-orphan"

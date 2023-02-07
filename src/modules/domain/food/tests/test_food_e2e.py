@@ -167,7 +167,7 @@ class TestGetAllFoods(TestBaseE2E):
                 assert (
                     food_category["food_category"]["id"] == "75827c83-d4cb-46cb-a092-9ba2dd962023"
                 )
-                assert food_category["food_category"]["food_category"] is None
+                assert food_category["food_category"]["parent"] is None
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get a list of all food without authentication")
