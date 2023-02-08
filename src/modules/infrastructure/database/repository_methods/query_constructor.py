@@ -1,7 +1,7 @@
 from typing import TypeVar, Union
 
 from sqlalchemy import inspect
-from sqlalchemy.orm import load_only, Query, Session, subqueryload
+from sqlalchemy.orm import joinedload, load_only, Query, Session
 
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
@@ -55,7 +55,7 @@ class QueryConstructor:
             elif key == "take":
                 query = query.limit(options_dict[key])
             elif key == "relations":
-                query = query.options(subqueryload(getattr(entity, *options_dict[key])))
+                query = query.options(joinedload(getattr(entity, *options_dict[key])))
             else:
                 raise KeyError(f"Unknown option: {key} in FindOptions")
 

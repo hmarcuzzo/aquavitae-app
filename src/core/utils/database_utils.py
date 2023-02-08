@@ -8,7 +8,6 @@ from sqlalchemy_utils import get_columns
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.find_one_options_type import FindOneOptions
 
-
 T = TypeVar("T")
 
 

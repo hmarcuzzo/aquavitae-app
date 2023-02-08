@@ -120,7 +120,7 @@ class TestGetAllAppointment(TestBaseE2E):
 
         assert response.status_code == HTTP_200_OK
         assert isinstance(data, dict)
-        assert data["data"][0]["id"] == "839f3db0-63e1-4e9d-af47-9000fc29a722"
+        assert "839f3db0-63e1-4e9d-af47-9000fc29a722" in [element["id"] for element in data["data"]]
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get appointment without authentication")

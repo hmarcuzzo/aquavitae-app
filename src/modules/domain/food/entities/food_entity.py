@@ -23,7 +23,7 @@ class Food(BaseEntity):
         ForeignKey("food_category.id", ondelete="CASCADE"),
         nullable=False,
     )
-    food_category = relationship("FoodCategory", back_populates="foods", lazy="select")
+    food_category = relationship("FoodCategory", back_populates="foods")
 
     specificities = relationship(
         "Specificity", back_populates="food", uselist=True, cascade="all, delete-orphan"
