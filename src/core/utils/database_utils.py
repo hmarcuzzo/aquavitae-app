@@ -54,7 +54,7 @@ class DatabaseUtils:
     def is_with_deleted_data(condition: Union[FindOneOptions, FindManyOptions]) -> bool:
         is_with_deleted_data = False
 
-        if "with_deleted" in condition:
+        if condition and "with_deleted" in condition:
             is_with_deleted_data = condition["with_deleted"]
             del condition["with_deleted"]
 

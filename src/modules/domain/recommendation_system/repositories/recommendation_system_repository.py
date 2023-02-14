@@ -1,6 +1,9 @@
+from datetime import date, timedelta
 from typing import List, Optional
+from uuid import UUID
 
-from sqlalchemy import and_, null, or_
+import pandas as pd
+from sqlalchemy import and_, func, null, or_
 from sqlalchemy.orm import Session
 
 from src.core.constants.enum.specificity_type import SpecificityTypes
@@ -59,7 +62,7 @@ class RecommendationSystemRepository:
         return [dict(row) for row in query.all()]
 
     @staticmethod
-    def get_user_food_preferences(user_id: str, db: Session) -> Optional[List[dict]]:
+    def get_user_food_preferences(user_id: str, db: Session) -> Optional[pd.DataFrame]:
         query = (
             db.query(
                 Food.id.label("food_id"),
@@ -81,15 +84,19 @@ class RecommendationSystemRepository:
             )
         )
 
-        return [dict(row) for row in query.all()]
+        return pd.DataFrame.from_records([dict(row) for row in query.all()])
 
     @staticmethod
-    def get_user_consumption_history(user_id: str, db: Session) -> Optional[List[dict]]:
+    def get_user_consumption_last_days(
+        db: Session, user_id: str, fatigued_food: List[UUID], days: int = 100
+    ) -> Optional[List[dict]]:
+        days_before = (date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
+
         query = (
             db.query(
                 User.id.label("user_id"),
                 Food.id.label("food_id"),
-                Food.description.label("food_description"),
+                func.count(Food.id).label("count"),
             )
             .outerjoin(NutritionalPlan, NutritionalPlan.user_id == User.id)
             .outerjoin(
@@ -103,6 +110,51 @@ class RecommendationSystemRepository:
             .where(
                 and_(
                     NutritionalPlan.user_id == user_id,
+                    NutritionalPlanHasMeal.meal_date >= days_before,
+                    NutritionalPlan.deleted_at == null(),
+                    NutritionalPlanHasMeal.deleted_at == null(),
+                    Diary.deleted_at == null(),
+                    Item.deleted_at == null(),
+                    ItemHasFood.deleted_at == null(),
+                    Food.deleted_at == null(),
+                    Food.id.notin_(fatigued_food),
+                )
+            )
+            .group_by(User.id, Food.id)
+        )
+
+        result = []
+        for row in query.all():
+            row_dict = dict(row)
+            row_dict.pop("user_id")
+            result.append(row_dict)
+
+        return result
+
+    @staticmethod
+    def get_fatigued_food_from_user(
+        db: Session, user_id: str, days: int = 30, amount_fatigue: int = 15
+    ) -> Optional[List[UUID]]:
+        days_before = (date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
+
+        query = (
+            db.query(
+                User.id.label("user_id"),
+                Food.id.label("food_id"),
+            )
+            .outerjoin(NutritionalPlan, NutritionalPlan.user_id == User.id)
+            .outerjoin(
+                NutritionalPlanHasMeal,
+                NutritionalPlanHasMeal.nutritional_plan_id == NutritionalPlan.id,
+            )
+            .outerjoin(Diary, Diary.nutritional_plan_has_meal_id == NutritionalPlanHasMeal.id)
+            .outerjoin(Item, Item.id == Diary.item_id)
+            .outerjoin(ItemHasFood, ItemHasFood.item_id == Item.id)
+            .outerjoin(Food, Food.id == ItemHasFood.food_id)
+            .where(
+                and_(
+                    NutritionalPlan.user_id == user_id,
+                    NutritionalPlanHasMeal.meal_date >= days_before,
                     NutritionalPlan.deleted_at == null(),
                     NutritionalPlanHasMeal.deleted_at == null(),
                     Diary.deleted_at == null(),
@@ -111,13 +163,14 @@ class RecommendationSystemRepository:
                     Food.deleted_at == null(),
                 )
             )
+            .group_by(User.id, Food.id)
+            .having(func.count(Food.id) >= amount_fatigue)
         )
 
         result = []
         for row in query.all():
             row_dict = dict(row)
-            row_dict.pop("user_id")
-            result.append(row_dict)
+            result.append(row_dict["food_id"])
 
         return result
 

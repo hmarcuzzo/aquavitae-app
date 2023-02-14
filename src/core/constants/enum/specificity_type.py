@@ -19,7 +19,19 @@ class SpecificityTypes(Enum):
 
     @staticmethod
     def specificity_preferences_consumption() -> List[str]:
+        return (
+            SpecificityTypes.specificity_likes_consume()
+            + SpecificityTypes.specificity_doesnt_like_consume()
+        )
+
+    @staticmethod
+    def specificity_likes_consume() -> List[str]:
         return [
             SpecificityTypes.LIKE.value,
+        ]
+
+    @staticmethod
+    def specificity_doesnt_like_consume() -> List[str]:
+        return [
             SpecificityTypes.DON_T_LIKE.value,
         ]

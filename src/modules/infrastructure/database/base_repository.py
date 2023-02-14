@@ -38,7 +38,7 @@ class BaseRepository(Generic[T]):
     async def find(
         self, options_dict: FindManyOptions = None, db: Session = next(get_db())
     ) -> Optional[List[T]]:
-        with pause_listener.pause(options_dict):
+        with pause_listener.pause(options_dict if options_dict else False):
             query = self.query_constructor.build_query(db, options_dict)
             result = query.all()
 
@@ -59,7 +59,7 @@ class BaseRepository(Generic[T]):
     async def find_and_count(
         self, options_dict: FindManyOptions = None, db: Session = next(get_db())
     ) -> Optional[Tuple[List[T], int]]:
-        with pause_listener.pause(options_dict):
+        with pause_listener.pause(options_dict if options_dict else False):
             query = self.query_constructor.build_query(db, options_dict)
             count = query.offset(None).limit(None).count()
             result = query.all()

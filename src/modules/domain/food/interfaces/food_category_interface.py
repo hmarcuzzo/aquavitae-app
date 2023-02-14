@@ -1,10 +1,11 @@
-from typing import Optional, Union
+from typing import List, Optional, Union
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from src.modules.domain.food.dto.food_category.create_food_category_dto import CreateFoodCategoryDto
 from src.modules.domain.food.dto.food_category.food_category_dto import FoodCategoryDto
+from src.modules.domain.food.entities.food_category_entity import FoodCategory
 from src.modules.domain.food.services.food_category_service import FoodCategoryService
 
 
@@ -26,3 +27,6 @@ class FoodCategoryInterface:
             ),
             db,
         )
+
+    async def get_all_food_categories(self, db: Session) -> Optional[List[FoodCategory]]:
+        return await self.food_category_service.get_all_food_categories(db)

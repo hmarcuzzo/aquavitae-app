@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -84,3 +84,11 @@ class FoodCategoryService:
         )
 
         return FoodCategoryDto(**food_category.__dict__)
+
+    async def get_all_food_categories(self, db: Session) -> Optional[List[FoodCategory]]:
+        return await self.food_category_repository.find(
+            {
+                "relations": ["parent", "foods"],
+            },
+            db,
+        )
