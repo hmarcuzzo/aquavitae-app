@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from uuid import UUID
 
 import pandas as pd
@@ -89,7 +89,7 @@ class RecommendationSystemRepository:
     @staticmethod
     def get_user_consumption_last_days(
         db: Session, user_id: str, fatigued_food: List[UUID], days: int = 100
-    ) -> Optional[List[dict]]:
+    ) -> Optional[List[Tuple[UUID, int]]]:
         days_before = (date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
 
         query = (
@@ -126,8 +126,7 @@ class RecommendationSystemRepository:
         result = []
         for row in query.all():
             row_dict = dict(row)
-            row_dict.pop("user_id")
-            result.append(row_dict)
+            result.append((row_dict["food_id"], row_dict["count"]))
 
         return result
 
