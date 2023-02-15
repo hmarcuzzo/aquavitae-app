@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional, Union
 from uuid import UUID
 
@@ -9,6 +10,7 @@ from src.modules.infrastructure.user.dto.user_dto import UserDto
 
 
 class NutritionalPlanDto(BaseDto):
+    validate_date: Optional[date]
     calories_limit: Optional[conint()]
     lipids_limit: Optional[conint()]
     proteins_limit: Optional[conint()]
