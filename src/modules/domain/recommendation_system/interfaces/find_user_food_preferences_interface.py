@@ -104,7 +104,7 @@ class FindUserFoodPreferencesInterface:
             ]
 
             root_category = self.__get_root_category(current_category)
-            foods_to_grade = self.__get_foods_from_category(root_category)
+            foods_to_grade = FoodCategoryInterface.get_all_foods_from_category(root_category)
             self.__award_score_by_preference(
                 food_preference, food_data, current_food, current_category, foods_to_grade
             )
@@ -152,15 +152,6 @@ class FindUserFoodPreferencesInterface:
             self.__define_score_by_preference_type(
                 foods_data_df, food, food_category, foods_to_grade, False
             )
-
-    @staticmethod
-    def __get_foods_from_category(father: FoodCategory) -> List[Food]:
-        all_food = []
-        for children_category in father.children:
-            all_food += FindUserFoodPreferencesInterface.__get_foods_from_category(
-                children_category
-            )
-        return all_food + father.foods if father.foods else all_food
 
     @staticmethod
     def __define_score_by_preference_type(
