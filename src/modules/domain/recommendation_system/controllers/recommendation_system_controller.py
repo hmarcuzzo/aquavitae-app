@@ -48,6 +48,6 @@ async def user_food_preferences(
     force_reload: bool = False,
     database: Session = Depends(get_db),
 ) -> List[DetailedUserPreferencesTable]:
-    return await rs_service.user_food_preferences(
+    return await rs_service.get_user_food_preferences(
         str(user_id), str(nutritional_plan_id), available, force_reload, database
     )
