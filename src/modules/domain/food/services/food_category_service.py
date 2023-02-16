@@ -75,7 +75,7 @@ class FoodCategoryService:
     # ---------------------- INTERFACE METHODS ----------------------
     async def find_one_category_by_description(
         self, description: str, db: Session
-    ) -> Optional[FoodCategoryDto]:
+    ) -> Optional[FoodCategory]:
         food_category = await self.food_category_repository.find_one_or_fail(
             {
                 "where": FoodCategory.description == description,
@@ -83,7 +83,7 @@ class FoodCategoryService:
             db,
         )
 
-        return FoodCategoryDto(**food_category.__dict__)
+        return food_category
 
     async def get_all_food_categories(self, db: Session) -> Optional[List[FoodCategory]]:
         return await self.food_category_repository.find(

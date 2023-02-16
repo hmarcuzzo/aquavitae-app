@@ -77,7 +77,7 @@ def fix_row_values(row: pd.Series, food_columns: List[str]) -> pd.Series:
     return row
 
 
-async def import_default_foods(df: pd.DataFrame, system_types: pd.DataFrame):
+async def import_default_foods(df: pd.DataFrame, system_types: pd.DataFrame) -> None:
     print("\nImporting default foods...\n")
 
     food_columns = [
@@ -133,7 +133,7 @@ async def import_default_foods(df: pd.DataFrame, system_types: pd.DataFrame):
 
 async def import_default_foods_and_category(
     file_name: str = "/src/static/doc/tca.xlsx", sheet_name: str = "insa_tca_v5_2021"
-):
+) -> None:
     file_name = input(f"File name [{file_name}]: ") or file_name
     sheet_name = input(f"Sheet name [{sheet_name}]: ") or sheet_name
 

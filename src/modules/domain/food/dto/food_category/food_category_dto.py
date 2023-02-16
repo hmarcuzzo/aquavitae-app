@@ -4,7 +4,6 @@ from typing import Optional, Union
 from uuid import UUID
 
 from pydantic import conint, constr
-from sqlalchemy.orm.dynamic import AppenderQuery
 
 from src.core.common.dto.base_dto import BaseDto
 
