@@ -205,3 +205,26 @@ class RecommendationSystemRepository:
         )
 
         return [dict(row) for row in query.all()]
+
+    @staticmethod
+    def get_allowed_items(allowed_food_ids: List[UUID], db: Session) -> List[Item]:
+        query = (
+            db.query(
+                Item,
+            )
+            .outerjoin(ItemHasFood, ItemHasFood.item_id == Item.id)
+            .outerjoin(
+                Food,
+                Food.id == ItemHasFood.food_id,
+            )
+            .where(
+                and_(
+                    Item.deleted_at == null(),
+                    ItemHasFood.deleted_at == null(),
+                    Food.deleted_at == null(),
+                    Food.id.in_(allowed_food_ids),
+                )
+            )
+        )
+
+        return query.all()
