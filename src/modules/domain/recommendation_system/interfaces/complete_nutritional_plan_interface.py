@@ -6,11 +6,14 @@ import pandas as pd
 from sqlalchemy.orm import Session
 
 from src.core.constants.default_values import DEFAULT_AMOUNT_GRAMS
-from src.core.types.exceptions_type import BadRequestException
+from src.core.types.exceptions_type import BadRequestException, NotFoundException
 from src.modules.domain.item.entities.item_entity import Item
 from src.modules.domain.nutritional_plan.entities.nutritional_plan_entity import NutritionalPlan
 from src.modules.domain.nutritional_plan.interfaces.nutritional_plan_interface import (
     NutritionalPlanInterface,
+)
+from src.modules.domain.plan_meals.interfaces.nutritional_plan_has_meal_interface import (
+    NutritionalPlanHasMealInterface,
 )
 from src.modules.domain.recommendation_system.interfaces.find_user_food_preferences_interface import (
     FindUserFoodPreferencesInterface,
@@ -18,6 +21,7 @@ from src.modules.domain.recommendation_system.interfaces.find_user_food_preferen
 from src.modules.domain.recommendation_system.repositories.recommendation_system_repository import (
     RecommendationSystemRepository,
 )
+from src.modules.infrastructure.database.control_transaction import keep_nested_transaction
 
 
 class CompleteNutritionalPlanInterface:
@@ -25,6 +29,7 @@ class CompleteNutritionalPlanInterface:
         self.rs_repository = RecommendationSystemRepository()
         self.nutritional_plan_interface = NutritionalPlanInterface()
         self.find_user_food_preferences_interface = FindUserFoodPreferencesInterface()
+        self.nphm_interface = NutritionalPlanHasMealInterface()
 
     # ----------------- PUBLIC METHODS ----------------- #
     async def complete_nutritional_plan(
@@ -55,8 +60,8 @@ class CompleteNutritionalPlanInterface:
         allowed_items = self.rs_repository.get_allowed_items(allowed_food_ids, db)
         user_items_preference = self.__generate_item_table(user_food_preference, allowed_items)
 
-        self.__complete_nutritional_plan(
-            nutritional_plan, user_items_preference, types_of_meal_plan
+        await self.__complete_nutritional_plan(
+            nutritional_plan, user_items_preference, types_of_meal_plan, db
         )
 
     # ----------------- PRIVATE METHODS ----------------- #
@@ -115,31 +120,37 @@ class CompleteNutritionalPlanInterface:
                         food_df[col].astype(float).values * multiplier
                     )
 
-    def __complete_nutritional_plan(
+    async def __complete_nutritional_plan(
         self,
         nutritional_plan: NutritionalPlan,
         user_item_preference: pd.DataFrame,
-        types_of_meal_plan: List[dict],
+        meal_plan: List[dict],
+        db: Session,
     ):
         date_list = self.__get_date_range(nutritional_plan)
-        types_of_meal_plan = self.__adapt_nutritional_values(types_of_meal_plan)
+        adapted_meal_plan = self.__adapt_nutritional_values(meal_plan)
         user_maximum_calories = self.__maximum_allowed_to_consume_per_day(
-            nutritional_plan, types_of_meal_plan
+            nutritional_plan, adapted_meal_plan
         )
 
-        for type_of_meal in types_of_meal_plan:
-            tm_items = self.__get_items_by_type_of_meal(type_of_meal, user_item_preference)
-            tm_items.sort_values(by="score", ascending=False, inplace=True)
-
-        for day in date_list:
-            pass
+        for meal in adapted_meal_plan:
+            meal_items = self.__get_items_by_type_of_meal(meal, user_item_preference)
+            meal_items.sort_values(by="score", ascending=False)
+            for meal_date in date_list:
+                try:
+                    await self.nphm_interface.get_nutritional_plan_has_meal_by_date(
+                        meal_date, nutritional_plan.id, meal["meals_of_plan_id"], db
+                    )
+                except NotFoundException:
+                    with keep_nested_transaction(db):
+                        new_nphm = await self.nphm_interface.create_nutritional_plan_has_meal(
+                            meal_date, nutritional_plan.id, meal["meals_of_plan_id"], db
+                        )
 
     @staticmethod
     def __get_date_range(nutritional_plan: NutritionalPlan) -> List[date]:
         first_date = min(meal.meal_date for meal in nutritional_plan.nutritional_plan_meals)
-        return (
-            pd.date_range(start=first_date, end=nutritional_plan.validate_date).to_period().tolist()
-        )
+        return pd.date_range(start=first_date, end=nutritional_plan.validate_date).tolist()
 
     @staticmethod
     def __adapt_nutritional_values(types_of_meal_plan: List[dict]) -> List[dict]:
@@ -185,8 +196,8 @@ class CompleteNutritionalPlanInterface:
 
     @staticmethod
     def __get_items_by_type_of_meal(
-        type_of_meal: dict, user_item_preference: pd.DataFrame
+        meal_of_plan: dict, user_item_preference: pd.DataFrame
     ) -> pd.DataFrame:
         return user_item_preference[
-            user_item_preference["can_eat_at"].apply(lambda x: type_of_meal["type_of_meal_id"] in x)
+            user_item_preference["can_eat_at"].apply(lambda x: meal_of_plan["type_of_meal_id"] in x)
         ]

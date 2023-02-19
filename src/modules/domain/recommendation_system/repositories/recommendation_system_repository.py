@@ -183,6 +183,7 @@ class RecommendationSystemRepository:
                 TypeOfMeal.lipids_percentage.label("lipids_percentage"),
                 TypeOfMeal.carbohydrates_percentage.label("carbohydrates_percentage"),
                 TypeOfMeal.proteins_percentage.label("proteins_percentage"),
+                MealsOfPlan.id.label("meals_of_plan_id"),
                 MealsOfPlan.start_time.label("start_time"),
                 MealsOfPlan.end_time.label("end_time"),
             )
