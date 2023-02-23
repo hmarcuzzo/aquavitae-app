@@ -1,6 +1,7 @@
+from concurrent.futures import as_completed, ThreadPoolExecutor
 from datetime import date
-from functools import reduce
 from typing import Dict, List
+from uuid import UUID
 
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -14,6 +15,9 @@ from src.modules.domain.nutritional_plan.interfaces.nutritional_plan_interface i
 )
 from src.modules.domain.plan_meals.interfaces.nutritional_plan_has_meal_interface import (
     NutritionalPlanHasMealInterface,
+)
+from src.modules.domain.recommendation_system.dto.user_preferences_table_dto import (
+    DetailedUserPreferencesTable,
 )
 from src.modules.domain.recommendation_system.interfaces.find_user_food_preferences_interface import (
     FindUserFoodPreferencesInterface,
@@ -50,75 +54,90 @@ class CompleteNutritionalPlanInterface:
             nutritional_plan_id, db
         )
 
-        user_food_preference = (
+        user_food_preferences = (
             await self.find_user_food_preferences_interface.get_user_food_preferences(
                 user_id, nutritional_plan_id, available, force_reload, db
             )
         )
 
-        allowed_food_ids = [food.id for food in user_food_preference]
+        allowed_food_ids = [food.id for food in user_food_preferences]
         allowed_items = self.rs_repository.get_allowed_items(allowed_food_ids, db)
-        user_items_preference = self.__generate_item_table(user_food_preference, allowed_items)
+        user_items_preference = self.__generate_item_table(user_food_preferences, allowed_items)
 
-        await self.__complete_nutritional_plan(
-            nutritional_plan, user_items_preference, types_of_meal_plan, db
-        )
+        # await self.__complete_nutritional_plan(
+        #     nutritional_plan, user_items_preference, types_of_meal_plan, db
+        # )
 
     # ----------------- PRIVATE METHODS ----------------- #
     @staticmethod
-    def __generate_item_table(user_food_preference, allowed_items: List[Item]) -> pd.DataFrame:
-        items_df = pd.DataFrame.from_records([item.__dict__ for item in allowed_items])
+    def __generate_item_table(
+        user_food_preferences: List[DetailedUserPreferencesTable], allowed_items: List[Item]
+    ) -> pd.DataFrame:
+        items_dataframe = pd.DataFrame.from_records([item.__dict__ for item in allowed_items])
 
-        new_columns = ["score", "proteins", "lipids", "carbohydrates", "energy_value", "can_eat_at"]
-        for col in new_columns:
-            if col == "can_eat_at":
-                items_df[col] = [[] for _ in range(len(items_df))]
-            else:
-                items_df[col] = 0
-
-        food_preferences_dict = {
-            food.id: pd.DataFrame.from_records([food.__dict__]) for food in user_food_preference
+        new_columns = {
+            "score": 0,
+            "proteins": 0,
+            "lipids": 0,
+            "carbohydrates": 0,
+            "energy_value": 0,
+            "can_eat_at": [[] for _ in range(len(items_dataframe))],
         }
-        for item in allowed_items:
-            CompleteNutritionalPlanInterface.__set_item_data(
-                item, items_df, food_preferences_dict, new_columns
-            )
+        items_dataframe = items_dataframe.assign(**new_columns)
 
-            item_df = items_df[items_df.id == item.id]
-            items_df.at[item_df.index[0], "can_eat_at"] = list(
-                reduce(
-                    set.intersection,
-                    [set(l) for l in items_df.loc[item_df.index[0], "can_eat_at"]],
+        food_preferences_dictionary = {
+            food.id: pd.DataFrame.from_records([food.__dict__]) for food in user_food_preferences
+        }
+
+        with ThreadPoolExecutor() as executor:
+            futures = []
+
+            for current_item in allowed_items:
+                submitted_future = executor.submit(
+                    CompleteNutritionalPlanInterface.__set_item_data,
+                    current_item,
+                    items_dataframe,
+                    food_preferences_dictionary,
                 )
-            )
+                futures.append(submitted_future)
 
-        return items_df
+            for future in as_completed(futures):
+                # If the __set_item_data method raises an exception, it will be raised here
+                pass
+
+        return items_dataframe
 
     @staticmethod
     def __set_item_data(
-        item: Item,
-        items_df: pd.DataFrame,
-        food_preferences_dict: Dict[int, pd.DataFrame],
-        new_columns: List[str],
+        current_item: Item,
+        items_dataframe: pd.DataFrame,
+        food_preferences_dictionary: Dict[UUID, pd.DataFrame],
     ) -> None:
-        for item_has_food in item.foods:
+        for item_has_food in current_item.foods:
             food_id = item_has_food.food_id
-            food_df = food_preferences_dict[food_id]
-            multiplier = item_has_food.amount_grams / DEFAULT_AMOUNT_GRAMS
+            food_preferences = food_preferences_dictionary[food_id]
+            amount_multiplier = item_has_food.amount_grams / DEFAULT_AMOUNT_GRAMS
 
-            item_df = items_df[items_df.id == item.id]
+            item_dataframe = items_dataframe[items_dataframe.id == current_item.id]
 
-            for col in new_columns:
-                if col == "score":
-                    items_df.loc[item_df.index, col] += food_df[col].values
-                elif col == "can_eat_at":
-                    items_df.at[item_df.index[0], col].append(
-                        [can_eat_at.type_of_meal_id for can_eat_at in item_has_food.food.can_eat_at]
-                    )
-                else:
-                    items_df.loc[item_df.index, col] += (
-                        food_df[col].astype(float).values * multiplier
-                    )
+            # Add food score to item score
+            items_dataframe.loc[item_dataframe.index, "score"] += food_preferences["score"].values
+
+            # Update can_eat_at values
+            can_eat_at_values = set(
+                [can_eat_at.type_of_meal_id for can_eat_at in item_has_food.food.can_eat_at]
+            )
+            current_values = set(items_dataframe.at[item_dataframe.index[0], "can_eat_at"])
+            items_dataframe.at[item_dataframe.index[0], "can_eat_at"] = list(
+                current_values.union(can_eat_at_values)
+            )
+
+            # Add nutrient values to item nutrient values
+            nutrient_columns = ["proteins", "lipids", "carbohydrates", "energy_value"]
+            nutrient_values = (
+                food_preferences[nutrient_columns].astype(float).values * amount_multiplier
+            )
+            items_dataframe.loc[item_dataframe.index, nutrient_columns] += nutrient_values
 
     async def __complete_nutritional_plan(
         self,
