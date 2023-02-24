@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqlalchemy import Boolean, Column, Date, ForeignKey
+from sqlalchemy import Boolean, Column, Float, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -9,6 +9,7 @@ from src.modules.infrastructure.database.base_entity import BaseEntity
 
 @dataclass
 class MealsOptions(BaseEntity):
+    amount: Float = Column(Float, nullable=False, default=1)
     suggested_by_system: Boolean = Column(Boolean, nullable=False)
 
     item_id: UUID = Column(
@@ -30,6 +31,7 @@ class MealsOptions(BaseEntity):
         suggested_by_system: Boolean,
         item_id: UUID,
         nutritional_plan_has_meal_id: UUID,
+        amount: Float = 1,
         *args,
         **kwargs,
     ):
@@ -37,3 +39,4 @@ class MealsOptions(BaseEntity):
         self.suggested_by_system = suggested_by_system
         self.item_id = item_id
         self.nutritional_plan_has_meal_id = nutritional_plan_has_meal_id
+        self.amount = amount
