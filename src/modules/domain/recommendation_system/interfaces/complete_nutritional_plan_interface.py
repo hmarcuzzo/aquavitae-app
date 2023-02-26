@@ -1,18 +1,25 @@
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from datetime import date
+from math import ceil
+from random import randint
 from typing import Dict, List
 from uuid import UUID
 
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from src.core.constants.default_values import DEFAULT_AMOUNT_GRAMS
+from src.core.constants.default_values import (
+    DEFAULT_AMOUNT_GRAMS,
+    MAXIMUM_SERVING_AMOUNT,
+    MINIMUM_SERVING_AMOUNT,
+)
 from src.core.types.exceptions_type import BadRequestException, NotFoundException
 from src.modules.domain.item.entities.item_entity import Item
 from src.modules.domain.nutritional_plan.entities.nutritional_plan_entity import NutritionalPlan
 from src.modules.domain.nutritional_plan.interfaces.nutritional_plan_interface import (
     NutritionalPlanInterface,
 )
+from src.modules.domain.plan_meals.interfaces.meals_options_interface import MealsOptionsInterface
 from src.modules.domain.plan_meals.interfaces.nutritional_plan_has_meal_interface import (
     NutritionalPlanHasMealInterface,
 )
@@ -34,6 +41,7 @@ class CompleteNutritionalPlanInterface:
         self.nutritional_plan_interface = NutritionalPlanInterface()
         self.find_user_food_preferences_interface = FindUserFoodPreferencesInterface()
         self.nphm_interface = NutritionalPlanHasMealInterface()
+        self.meals_options_interface = MealsOptionsInterface()
 
     # ----------------- PUBLIC METHODS ----------------- #
     async def complete_nutritional_plan(
@@ -64,9 +72,9 @@ class CompleteNutritionalPlanInterface:
         allowed_items = self.rs_repository.get_allowed_items(allowed_food_ids, db)
         user_items_preference = self.__generate_item_table(user_food_preferences, allowed_items)
 
-        # await self.__complete_nutritional_plan(
-        #     nutritional_plan, user_items_preference, types_of_meal_plan, db
-        # )
+        await self.__complete_nutritional_plan(
+            nutritional_plan, user_items_preference, types_of_meal_plan, db
+        )
 
     # ----------------- PRIVATE METHODS ----------------- #
     @staticmethod
@@ -146,15 +154,20 @@ class CompleteNutritionalPlanInterface:
         meal_plan: List[dict],
         db: Session,
     ):
+        nutrients = ["proteins", "lipids", "carbohydrates", "calories"]
+
         date_list = self.__get_date_range(nutritional_plan)
-        adapted_meal_plan = self.__adapt_nutritional_values(meal_plan)
-        user_maximum_calories = self.__maximum_allowed_to_consume_per_day(
-            nutritional_plan, adapted_meal_plan
+        adapted_meal_plan = self.__adapt_nutritional_values(meal_plan, nutrients)
+        maximum_calories_per_day = self.__maximum_allowed_to_consume_per_day(
+            nutritional_plan, adapted_meal_plan, nutrients
         )
 
         for meal in adapted_meal_plan:
             meal_items = self.__get_items_by_type_of_meal(meal, user_item_preference)
-            meal_items.sort_values(by="score", ascending=False)
+
+            maximum_calories_in_meal = self.__get_maximum_calories_in_meal(
+                maximum_calories_per_day, meal, nutrients
+            )
             for meal_date in date_list:
                 try:
                     await self.nphm_interface.get_nutritional_plan_has_meal_by_date(
@@ -165,6 +178,10 @@ class CompleteNutritionalPlanInterface:
                         new_nphm = await self.nphm_interface.create_nutritional_plan_has_meal(
                             meal_date, nutritional_plan.id, meal["meals_of_plan_id"], db
                         )
+                        await self.__suggest_meals(
+                            new_nphm.id, meal_items, maximum_calories_in_meal, db
+                        )
+                    db.commit()
 
     @staticmethod
     def __get_date_range(nutritional_plan: NutritionalPlan) -> List[date]:
@@ -172,15 +189,15 @@ class CompleteNutritionalPlanInterface:
         return pd.date_range(start=first_date, end=nutritional_plan.validate_date).tolist()
 
     @staticmethod
-    def __adapt_nutritional_values(types_of_meal_plan: List[dict]) -> List[dict]:
-        keys = [
-            "proteins_percentage",
-            "lipids_percentage",
-            "carbohydrates_percentage",
-            "calories_percentage",
-        ]
-
-        plan_percentages = {key: sum(meal[key] for meal in types_of_meal_plan) for key in keys}
+    def __adapt_nutritional_values(
+        types_of_meal_plan: List[dict], nutrients: List[str]
+    ) -> List[dict]:
+        plan_percentages = {
+            f"{nutrient}_percentage": sum(
+                meal[f"{nutrient}_percentage"] for meal in types_of_meal_plan
+            )
+            for nutrient in nutrients
+        }
         num_meals = len(types_of_meal_plan)
 
         for key, value in plan_percentages.items():
@@ -193,7 +210,7 @@ class CompleteNutritionalPlanInterface:
 
     @staticmethod
     def __maximum_allowed_to_consume_per_day(
-        nutritional_plan: NutritionalPlan, types_of_meal_plan: List[dict]
+        nutritional_plan: NutritionalPlan, types_of_meal_plan: List[dict], nutrients: List[str]
     ) -> dict:
         divisor = (
             nutritional_plan.period_limit.days
@@ -201,17 +218,10 @@ class CompleteNutritionalPlanInterface:
             else 1 / len(types_of_meal_plan)
         )
 
-        nutritional_limits = {
-            "proteins_limit": nutritional_plan.proteins_limit,
-            "lipids_limit": nutritional_plan.lipids_limit,
-            "carbohydrates_limit": nutritional_plan.carbohydrates_limit,
-            "calories_limit": nutritional_plan.calories_limit,
+        return {
+            f"{nutrient}_limit": getattr(nutritional_plan, f"{nutrient}_limit") / divisor
+            for nutrient in nutrients
         }
-
-        for nutrient, limit in nutritional_limits.items():
-            nutritional_limits[nutrient] = limit / divisor
-
-        return nutritional_limits
 
     @staticmethod
     def __get_items_by_type_of_meal(
@@ -220,3 +230,79 @@ class CompleteNutritionalPlanInterface:
         return user_item_preference[
             user_item_preference["can_eat_at"].apply(lambda x: meal_of_plan["type_of_meal_id"] in x)
         ]
+
+    async def __suggest_meals(
+        self,
+        nphm_id: UUID,
+        meal_items: pd.DataFrame,
+        maximum_calories_in_meal: dict,
+        db: Session,
+    ):
+        meal_items = meal_items.sort_values("score", ascending=False)
+        size = len(meal_items)
+
+        splitted_meals = [
+            meal_items[0 : ceil(size * 0.1)],
+            meal_items[ceil(size * 0.1) : ceil(size * 0.3)],
+            meal_items[ceil(size * 0.3) : ceil(size * 0.6)],
+        ]
+
+        for splitted_item in splitted_meals:
+            if not len(splitted_item):
+                continue
+
+            index = randint(0, len(splitted_item) - 1)
+            item = splitted_item.iloc[index]
+            amount = CompleteNutritionalPlanInterface.__find_ideal_quantity(
+                item, maximum_calories_in_meal
+            )
+            await self.meals_options_interface.create_meal_option(
+                amount, True, item["id"], nphm_id, db
+            )
+
+    @staticmethod
+    def __get_maximum_calories_in_meal(
+        maximum_calories_per_day: dict, meal: dict, nutrients: List[str]
+    ) -> dict:
+        return {
+            nutrient
+            + "_limit": maximum_calories_per_day[nutrient + "_limit"]
+            * (meal[nutrient + "_percentage"] / 100)
+            for nutrient in nutrients
+        }
+
+    @staticmethod
+    def __find_ideal_quantity(item: pd.Series, meal: dict) -> float:
+        # Set initial value and adjustment factor
+        quantity, step = MAXIMUM_SERVING_AMOUNT, MINIMUM_SERVING_AMOUNT
+
+        while True:
+            # Calculates the amount of nutrients for the current quantity
+            proteins, lipids, carbohydrates, energy = (
+                item["proteins"] * quantity,
+                item["lipids"] * quantity,
+                item["carbohydrates"] * quantity,
+                item["energy_value"] * quantity,
+            )
+
+            # Checks that the nutrients are within the allowed limits
+            if (
+                proteins <= meal["proteins_limit"]
+                and lipids <= meal["lipids_limit"]
+                and carbohydrates <= meal["carbohydrates_limit"]
+                and energy <= meal["calories_limit"]
+            ):
+                return quantity
+
+            # If they aren't, adjust the quantity to approach the limit
+            if (
+                proteins > meal["proteins_limit"]
+                or lipids > meal["lipids_limit"]
+                or carbohydrates > meal["carbohydrates_limit"]
+                or energy > meal["calories_limit"]
+            ):
+                quantity -= step
+
+            # Checks that the quantity is within limits
+            if quantity < MINIMUM_SERVING_AMOUNT:
+                return MINIMUM_SERVING_AMOUNT

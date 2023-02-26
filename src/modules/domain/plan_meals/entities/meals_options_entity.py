@@ -4,12 +4,13 @@ from sqlalchemy import Boolean, Column, Float, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
+from src.core.constants.default_values import DEFAULT_SERVING_AMOUNT
 from src.modules.infrastructure.database.base_entity import BaseEntity
 
 
 @dataclass
 class MealsOptions(BaseEntity):
-    amount: Float = Column(Float, nullable=False, default=1)
+    amount: Float = Column(Float, nullable=False, default=DEFAULT_SERVING_AMOUNT)
     suggested_by_system: Boolean = Column(Boolean, nullable=False)
 
     item_id: UUID = Column(
@@ -31,7 +32,7 @@ class MealsOptions(BaseEntity):
         suggested_by_system: Boolean,
         item_id: UUID,
         nutritional_plan_has_meal_id: UUID,
-        amount: Float = 1,
+        amount: Float = DEFAULT_SERVING_AMOUNT,
         *args,
         **kwargs,
     ):
