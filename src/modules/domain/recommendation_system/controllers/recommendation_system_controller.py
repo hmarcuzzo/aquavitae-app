@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -22,6 +22,7 @@ rs_service = RecommendationSystemService()
 
 @rs_router.post(
     "/complete-nutritional-plan",
+    response_model=List[SimplifiedUserPreferencesTable],
     dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def complete_nutritional_plan(
@@ -30,8 +31,8 @@ async def complete_nutritional_plan(
     available: bool = True,
     force_reload: bool = False,
     database: Session = Depends(get_db),
-) -> None:
-    await rs_service.complete_nutritional_plan(
+) -> Optional[List[SimplifiedUserPreferencesTable]]:
+    return await rs_service.complete_nutritional_plan(
         str(user_id), str(nutritional_plan_id), available, force_reload, database
     )
 
@@ -47,7 +48,7 @@ async def user_food_preferences(
     available: bool = True,
     force_reload: bool = False,
     database: Session = Depends(get_db),
-) -> List[DetailedUserPreferencesTable]:
+) -> Optional[List[DetailedUserPreferencesTable]]:
     return await rs_service.get_user_food_preferences(
         str(user_id), str(nutritional_plan_id), available, force_reload, database
     )

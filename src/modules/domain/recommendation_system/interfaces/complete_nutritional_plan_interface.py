@@ -51,7 +51,7 @@ class CompleteNutritionalPlanInterface:
         available: bool,
         force_reload: bool,
         db: Session,
-    ):
+    ) -> pd.DataFrame:
         types_of_meal_plan = self.rs_repository.get_types_of_meal_plan(nutritional_plan_id, db)
         if len(types_of_meal_plan) == 0:
             raise BadRequestException(
@@ -75,6 +75,8 @@ class CompleteNutritionalPlanInterface:
         await self.__complete_nutritional_plan(
             nutritional_plan, user_items_preference, types_of_meal_plan, db
         )
+
+        return user_items_preference.sort_values("score", ascending=False)
 
     # ----------------- PRIVATE METHODS ----------------- #
     @staticmethod
@@ -153,7 +155,7 @@ class CompleteNutritionalPlanInterface:
         user_item_preference: pd.DataFrame,
         meal_plan: List[dict],
         db: Session,
-    ):
+    ) -> None:
         nutrients = ["proteins", "lipids", "carbohydrates", "calories"]
 
         date_list = self.__get_date_range(nutritional_plan)

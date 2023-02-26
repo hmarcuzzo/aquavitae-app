@@ -1,10 +1,11 @@
-from typing import List
+from typing import List, Optional
 
 from cachetools import TTLCache
 from sqlalchemy.orm import Session
 
 from src.modules.domain.recommendation_system.dto.user_preferences_table_dto import (
     DetailedUserPreferencesTable,
+    SimplifiedUserPreferencesTable,
 )
 from src.modules.domain.recommendation_system.interfaces.complete_nutritional_plan_interface import (
     CompleteNutritionalPlanInterface,
@@ -34,10 +35,14 @@ class RecommendationSystemService:
         available: bool,
         force_reload: bool,
         db: Session,
-    ):
-        return await self.complete_nutritional_plan_interface.complete_nutritional_plan(
-            user_id, nutritional_plan_id, available, force_reload, db
-        )
+    ) -> Optional[List[SimplifiedUserPreferencesTable]]:
+        user_items_preference = (
+            await self.complete_nutritional_plan_interface.complete_nutritional_plan(
+                user_id, nutritional_plan_id, available, force_reload, db
+            )
+        ).to_dict("records")
+
+        return [SimplifiedUserPreferencesTable(**item) for item in user_items_preference]
 
     async def get_user_food_preferences(
         self,
@@ -46,7 +51,7 @@ class RecommendationSystemService:
         available: bool,
         force_reload: bool,
         db: Session,
-    ) -> List[DetailedUserPreferencesTable]:
+    ) -> Optional[List[DetailedUserPreferencesTable]]:
         return await self.find_user_food_preferences_interface.get_user_food_preferences(
             user_id, nutritional_plan_id, available, force_reload, db
         )
