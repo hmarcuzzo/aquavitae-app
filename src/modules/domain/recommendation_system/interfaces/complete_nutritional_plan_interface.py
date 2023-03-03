@@ -159,7 +159,7 @@ class CompleteNutritionalPlanInterface:
         nutrients = ["proteins", "lipids", "carbohydrates", "calories"]
 
         date_list = self.__get_date_range(nutritional_plan)
-        adapted_meal_plan = self.__adapt_nutritional_values(meal_plan, nutrients)
+        adapted_meal_plan = self.__adapt_nutritional_values(meal_plan)
         maximum_calories_per_day = self.__maximum_allowed_to_consume_per_day(
             nutritional_plan, adapted_meal_plan, nutrients
         )
@@ -191,14 +191,9 @@ class CompleteNutritionalPlanInterface:
         return pd.date_range(start=first_date, end=nutritional_plan.validate_date).tolist()
 
     @staticmethod
-    def __adapt_nutritional_values(
-        types_of_meal_plan: List[dict], nutrients: List[str]
-    ) -> List[dict]:
+    def __adapt_nutritional_values(types_of_meal_plan: List[dict]) -> List[dict]:
         plan_percentages = {
-            f"{nutrient}_percentage": sum(
-                meal[f"{nutrient}_percentage"] for meal in types_of_meal_plan
-            )
-            for nutrient in nutrients
+            "calories_percentage": sum(meal["calories_percentage"] for meal in types_of_meal_plan)
         }
         num_meals = len(types_of_meal_plan)
 
@@ -239,7 +234,7 @@ class CompleteNutritionalPlanInterface:
         meal_items: pd.DataFrame,
         maximum_calories_in_meal: dict,
         db: Session,
-    ):
+    ) -> None:
         meal_items = meal_items.sort_values("score", ascending=False)
         size = len(meal_items)
 
@@ -266,12 +261,19 @@ class CompleteNutritionalPlanInterface:
     def __get_maximum_calories_in_meal(
         maximum_calories_per_day: dict, meal: dict, nutrients: List[str]
     ) -> dict:
-        return {
-            nutrient
-            + "_limit": maximum_calories_per_day[nutrient + "_limit"]
-            * (meal[nutrient + "_percentage"] / 100)
-            for nutrient in nutrients
+        nutrients.remove("calories")
+
+        maximum_calories_in_meal = {
+            "calories_limit": maximum_calories_per_day["calories_limit"]
+            * (meal["calories_percentage"] / 100)
         }
+
+        calories_limit = maximum_calories_in_meal["calories_limit"]
+        for nutrient in nutrients:
+            nutrient_percentage = meal[f"{nutrient}_percentage"] / 100
+            maximum_calories_in_meal[f"{nutrient}_limit"] = calories_limit * nutrient_percentage
+
+        return maximum_calories_in_meal
 
     @staticmethod
     def __find_ideal_quantity(item: pd.Series, meal: dict) -> float:
