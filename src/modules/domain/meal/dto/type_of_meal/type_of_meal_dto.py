@@ -8,7 +8,7 @@ from src.modules.domain.food.dto.food_category.food_category_dto import FoodCate
 
 
 class TypeOfMealDto(BaseDto):
-    description: Optional[constr(max_length=255)]
+    description: constr(max_length=255)
     calories_percentage: Optional[confloat()]
     lipids_percentage: Optional[confloat()]
     proteins_percentage: Optional[confloat()]
