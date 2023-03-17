@@ -139,7 +139,7 @@ class TestGetTypeOfMealById(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Success: Get one type of meal by id")
-    async def test_get_food_by_id(self, user_admin: Optional[LoginPayloadDto]) -> None:
+    async def test_get_type_of_meal_by_id(self, user_admin: Optional[LoginPayloadDto]) -> None:
         type_of_meal_item = self.db_test_utils.get_entity_objects(TypeOfMeal)[0]
 
         async with AsyncClient(app=app, base_url=self.base_url) as ac:

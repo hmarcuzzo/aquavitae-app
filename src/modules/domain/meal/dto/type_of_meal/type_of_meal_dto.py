@@ -1,10 +1,8 @@
-from typing import Optional, Union
-from uuid import UUID
+from typing import Optional
 
-from pydantic import condecimal, confloat, constr
+from pydantic import confloat, constr
 
 from src.core.common.dto.base_dto import BaseDto
-from src.modules.domain.food.dto.food_category.food_category_dto import FoodCategoryDto
 
 
 class TypeOfMealDto(BaseDto):

@@ -28,7 +28,7 @@ class TypeOfMealService:
         new_type_of_meal = self.type_of_meal_repository.save(new_type_of_meal, db)
         return TypeOfMealDto(**new_type_of_meal.__dict__)
 
-    async def find_one_type_of_meal(self, id: str, db: Session):
+    async def find_one_type_of_meal(self, id: str, db: Session) -> Optional[TypeOfMealDto]:
         type_of_meal = await self.type_of_meal_repository.find_one_or_fail(
             {"where": TypeOfMeal.id == id}, db
         )
