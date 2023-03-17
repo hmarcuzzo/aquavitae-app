@@ -13,18 +13,27 @@ from src.modules.domain.food.dto.food.food_dto import FoodDto
 from src.modules.domain.food.dto.food.update_food_dto import UpdateFoodDto
 from src.modules.domain.food.entities.food_entity import Food
 from src.modules.domain.food.repositories.food_repository import FoodRepository
+from src.modules.domain.item.interfaces.item_interface import ItemInterface
+from src.modules.infrastructure.database.control_transaction import keep_nested_transaction
 
 
 class FoodService:
     def __init__(self):
         self.food_repository = FoodRepository()
+        self.item_interface = ItemInterface()
 
     # ---------------------- PUBLIC METHODS ----------------------
     async def create_food(self, food_dto: CreateFoodDto, db: Session) -> Optional[FoodDto]:
-        new_food = await self.food_repository.create(food_dto, db)
+        try:
+            with keep_nested_transaction(db):
+                new_food = await self.food_repository.create(food_dto, db)
+                await self.item_interface.create_item_from_food(new_food, db)
 
-        new_food = await self.food_repository.save(new_food, db)
-        return FoodDto(**new_food.__dict__)
+            new_food = self.food_repository.save(new_food, db)
+            return FoodDto(**new_food.__dict__)
+        except Exception as e:
+            db.rollback()
+            raise e
 
     async def get_all_food_paginated(
         self, pagination: FindManyOptions, db: Session
@@ -52,3 +61,21 @@ class FoodService:
         self, id: str, update_food_dto: UpdateFoodDto, db: Session
     ) -> Optional[UpdateResult]:
         return await self.food_repository.update(id, update_food_dto, db)
+
+    # ---------------------- INTERFACE METHODS ----------------------
+    async def find_one_food_by_description(
+        self, description: str, db: Session
+    ) -> Optional[FoodDto]:
+        food = await self.food_repository.find_one_or_fail(
+            {
+                "where": Food.description == description,
+            },
+            db,
+        )
+
+        return FoodDto(**food.__dict__)
+
+    async def get_all_food(self, db: Session) -> Optional[list[FoodDto]]:
+        all_food = await self.food_repository.find(db=db)
+
+        return [FoodDto(**food.__dict__) for food in all_food]

@@ -37,20 +37,19 @@ class AppointmentService:
         self, appointment_dto: CreateAppointmentDto, db: Session
     ) -> Optional[AppointmentDto]:
         try:
-            db.begin_nested()
-            goals = deepcopy(appointment_dto.goals) if appointment_dto.goals else []
-            delattr(appointment_dto, "goals")
+            with db.begin_nested():
+                goals = deepcopy(appointment_dto.goals) if appointment_dto.goals else []
+                delattr(appointment_dto, "goals")
 
-            new_appointment = await self.appointment_repository.create(appointment_dto, db)
+                new_appointment = await self.appointment_repository.create(appointment_dto, db)
 
-            new_appointment = await self.appointment_repository.save(new_appointment, db)
-            for goal in goals:
-                goal_dto = AppointmentHasAppointmentGoal(
-                    appointment_id=new_appointment.id, appointment_goal_id=goal
-                )
-                new_appointment.appointment_has_goals += [
-                    await self.appointment_has_appointment_goal_repository.create(goal_dto, db)
-                ]
+                for goal in goals:
+                    goal_dto = AppointmentHasAppointmentGoal(
+                        appointment_id=new_appointment.id, appointment_goal_id=goal
+                    )
+                    new_appointment.appointment_has_goals += [
+                        await self.appointment_has_appointment_goal_repository.create(goal_dto, db)
+                    ]
 
             response = AppointmentDto(**new_appointment.__dict__)
             db.commit()
@@ -94,37 +93,40 @@ class AppointmentService:
         db: Session,
     ) -> Optional[UpdateResult]:
         try:
-            db.begin_nested()
-            goals = deepcopy(update_appointment_dto.goals) if update_appointment_dto.goals else []
-            delattr(update_appointment_dto, "goals")
+            with db.begin_nested():
+                goals = (
+                    deepcopy(update_appointment_dto.goals) if update_appointment_dto.goals else []
+                )
+                delattr(update_appointment_dto, "goals")
 
-            response = await self.appointment_repository.update(
-                {"where": Appointment.id == appointment_id},
-                update_appointment_dto,
-                db,
-            )
+                response = await self.appointment_repository.update(
+                    {"where": Appointment.id == appointment_id},
+                    update_appointment_dto,
+                    db,
+                )
 
-            appointment_goals = await self.appointment_has_appointment_goal_repository.find(
-                {"where": AppointmentHasAppointmentGoal.appointment_id == appointment_id}, db
-            )
+                appointment_goals = await self.appointment_has_appointment_goal_repository.find(
+                    {"where": AppointmentHasAppointmentGoal.appointment_id == appointment_id}, db
+                )
 
-            for appointment_goal in appointment_goals:
-                if appointment_goal.appointment_goal_id not in goals:
-                    response["affected"] += (
-                        await self.appointment_has_appointment_goal_repository.soft_delete(
-                            str(appointment_goal.id), db
+                for appointment_goal in appointment_goals:
+                    if appointment_goal.appointment_goal_id not in goals:
+                        response["affected"] += (
+                            await self.appointment_has_appointment_goal_repository.soft_delete(
+                                str(appointment_goal.id), db
+                            )
+                        )["affected"]
+
+                for goal in goals:
+                    if goal not in [
+                        appointment_goal.appointment_goal_id
+                        for appointment_goal in appointment_goals
+                    ]:
+                        goal_dto = AppointmentHasAppointmentGoal(
+                            appointment_id=UUID(appointment_id), appointment_goal_id=goal
                         )
-                    )["affected"]
-
-            for goal in goals:
-                if goal not in [
-                    appointment_goal.appointment_goal_id for appointment_goal in appointment_goals
-                ]:
-                    goal_dto = AppointmentHasAppointmentGoal(
-                        appointment_id=UUID(appointment_id), appointment_goal_id=goal
-                    )
-                    await self.appointment_has_appointment_goal_repository.create(goal_dto, db)
-                    response["affected"] += 1
+                        await self.appointment_has_appointment_goal_repository.create(goal_dto, db)
+                        response["affected"] += 1
 
             db.commit()
             return response

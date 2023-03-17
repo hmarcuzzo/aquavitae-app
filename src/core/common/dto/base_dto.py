@@ -14,3 +14,6 @@ class BaseDto(BaseModel):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     deleted_at: Optional[datetime]
+
+    def __hash__(self):
+        return hash(self.id)

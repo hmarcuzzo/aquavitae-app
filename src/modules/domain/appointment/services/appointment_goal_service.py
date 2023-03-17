@@ -36,7 +36,7 @@ class AppointmentGoalService:
             appointment_goal_dto, db
         )
 
-        new_appointment_goal = await self.appointment_goal_repository.save(new_appointment_goal, db)
+        new_appointment_goal = self.appointment_goal_repository.save(new_appointment_goal, db)
         return AppointmentGoalDto(**new_appointment_goal.__dict__)
 
     async def get_all_appointment_goal(
