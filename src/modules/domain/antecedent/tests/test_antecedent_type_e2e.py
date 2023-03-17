@@ -11,7 +11,9 @@ from starlette.status import (
 )
 
 from src.main import app
+from src.modules.domain.antecedent.entities.antecedent_entity import Antecedent
 from src.modules.domain.antecedent.entities.antecedent_type_entity import AntecedentType
+from src.modules.domain.antecedent.services.antecedent_service import AntecedentService
 from src.modules.domain.antecedent.services.antecedent_type_service import AntecedentTypeService
 from src.modules.infrastructure.auth.dto.login_payload_dto import LoginPayloadDto
 from test.test_base_e2e import TestBaseE2E
@@ -21,7 +23,7 @@ antecedent_type_service = AntecedentTypeService()
 
 
 @pytest.mark.describe(f"POST Route: /{CONTROLLER}/create")
-class TestCreateTypeOfMeal(TestBaseE2E):
+class TestCreateAntecedentType(TestBaseE2E):
     route = f"/{CONTROLLER}/create"
 
     @pytest.mark.asyncio
@@ -186,6 +188,20 @@ class TestDeleteAntecedentType(TestBaseE2E):
         assert response.status_code == HTTP_404_NOT_FOUND
 
     @pytest.mark.asyncio
+    @pytest.mark.it("Success: Check if all relation from antecedent type, was deleted")
+    async def test_delete_antecedent_type_relations(
+        self, user_admin: Optional[LoginPayloadDto], user_common: Optional[LoginPayloadDto]
+    ) -> None:
+        antecedent_type_item = self.db_test_utils.get_entity_objects(AntecedentType)[0]
+        antecedent_service = AntecedentService()
+        response = await antecedent_service.antecedent_repository.find(
+            {"where": Antecedent.antecedent_type_id == antecedent_type_item["id"]},
+            self.db_test_utils.db,
+        )
+        assert isinstance(response, list)
+        assert len(response) == 0
+
+    @pytest.mark.asyncio
     @pytest.mark.it("Failure: Delete antecedent type already deleted")
     async def test_delete_antecedent_type_already_deleted(
         self, user_admin: Optional[LoginPayloadDto]
@@ -218,7 +234,7 @@ class TestDeleteAntecedentType(TestBaseE2E):
 
 
 @pytest.mark.describe(f"PATCH Route: /{CONTROLLER}/update/<id>")
-class TestUpdateFood(TestBaseE2E):
+class TestUpdateAntecedentType(TestBaseE2E):
     route = f"/{CONTROLLER}/update"
 
     @pytest.mark.asyncio
@@ -247,13 +263,13 @@ class TestUpdateFood(TestBaseE2E):
         assert data["description"] == "Antecedent Type 2 Updated"
 
     @pytest.mark.asyncio
-    @pytest.mark.it("Failure: Update type fo meal without authentication")
+    @pytest.mark.it("Failure: Update antecedent type without authentication")
     async def test_no_authentication(self) -> None:
         antecedent_type_item = self.db_test_utils.get_entity_objects(AntecedentType)[1]
         await self.patch_no_authentication(f"{self.route}/{antecedent_type_item['id']}")
 
     @pytest.mark.asyncio
-    @pytest.mark.it("Failure: Update food without required authentication")
+    @pytest.mark.it("Failure: Update antecedent type without required authentication")
     async def test_different_required_authentication(
         self, user_common: Optional[LoginPayloadDto]
     ) -> None:

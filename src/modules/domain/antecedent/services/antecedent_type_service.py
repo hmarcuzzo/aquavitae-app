@@ -57,7 +57,10 @@ class AntecedentTypeService:
         )
 
         return create_pagination_response_dto(
-            [AntecedentTypeDto.from_orm(type_of_meal) for type_of_meal in all_antecedent_type],
+            [
+                AntecedentTypeDto.from_orm(antecedent_type)
+                for antecedent_type in all_antecedent_type
+            ],
             total,
             pagination["skip"],
             pagination["take"],
