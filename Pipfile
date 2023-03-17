@@ -87,6 +87,7 @@ pytest-durations = "*"
 pandas = "*"
 openpyxl = "*"
 odfpy = "*"
+cachetools = "*"
 
 [dev-packages]
 
