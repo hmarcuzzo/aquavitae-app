@@ -53,7 +53,7 @@ class CompleteNutritionalPlanInterface:
         db: Session,
     ) -> pd.DataFrame:
         types_of_meal_plan = self.rs_repository.get_types_of_meal_plan(nutritional_plan_id, db)
-        if len(types_of_meal_plan) == 0:
+        if len(types_of_meal_plan) == 1 and types_of_meal_plan[0]["type_of_meal_id"] is None:
             raise BadRequestException(
                 "It is necessary that the nutritional plan has marked which type of meals it has."
             )
