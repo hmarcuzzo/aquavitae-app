@@ -23,8 +23,19 @@ class User(BaseEntity):
     anthropometric_data = relationship(
         "AnthropometricData", back_populates="user", uselist=True, cascade="all, delete-orphan"
     )
-    appointments = relationship(
-        "Appointment", back_populates="user", uselist=True, cascade="all, delete-orphan"
+    user_appointments = relationship(
+        "Appointment",
+        back_populates="user",
+        uselist=True,
+        cascade="all, delete-orphan",
+        primaryjoin="User.id==Appointment.user_id",
+    )
+    nutritionist_appointments = relationship(
+        "Appointment",
+        back_populates="nutritionist",
+        uselist=True,
+        cascade="all, delete-orphan",
+        primaryjoin="User.id==Appointment.nutritionist_id",
     )
     antecedents = relationship(
         "Antecedent", back_populates="user", uselist=True, cascade="all, delete-orphan"
