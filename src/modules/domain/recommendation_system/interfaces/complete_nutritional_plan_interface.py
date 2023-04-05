@@ -261,7 +261,8 @@ class CompleteNutritionalPlanInterface:
     def __get_maximum_calories_in_meal(
         maximum_calories_per_day: dict, meal: dict, nutrients: List[str]
     ) -> dict:
-        nutrients.remove("calories")
+        if "calories" in nutrients:
+            nutrients.remove("calories")
 
         maximum_calories_in_meal = {
             "calories_limit": maximum_calories_per_day["calories_limit"]
