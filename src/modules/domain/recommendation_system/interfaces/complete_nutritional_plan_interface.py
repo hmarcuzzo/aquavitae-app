@@ -201,7 +201,9 @@ class CompleteNutritionalPlanInterface:
             if value > 100:
                 excess = value - 100
                 for meal in types_of_meal_plan:
-                    meal[key] -= excess / num_meals
+                    meal[key] -= (
+                        excess / num_meals if (meal[key] - (excess / num_meals)) > 0 else meal[key]
+                    )
 
         return types_of_meal_plan
 
