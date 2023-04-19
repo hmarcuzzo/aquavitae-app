@@ -14,6 +14,8 @@ from src.modules.domain.item.dto.item.update_item_dto import UpdateItemDto
 from src.modules.domain.item.entities.item_entity import Item
 from src.modules.domain.item.interfaces.item_has_food_interface import ItemHasFoodInterface
 from src.modules.domain.item.repositories.item_repository import ItemRepository
+from src.modules.domain.meal.dto.item_can_eat_at.item_can_eat_at_dto import ItemCanEatAtDto
+from src.modules.domain.meal.interfaces.item_can_eat_at_interface import ItemCanEatAtInterface
 from src.modules.infrastructure.database.control_transaction import keep_nested_transaction
 
 
@@ -21,6 +23,7 @@ class ItemService:
     def __init__(self):
         self.item_repository = ItemRepository()
         self.item_has_food_interface = ItemHasFoodInterface()
+        self.item_can_eat_at_interface = ItemCanEatAtInterface()
 
     # ---------------------- PUBLIC METHODS ----------------------
     async def create_item(self, item_dto: CreateItemDto, db: Session) -> Optional[ItemDto]:
@@ -33,10 +36,14 @@ class ItemService:
                 new_item_foods = await self.item_has_food_interface.create_item_has_food(
                     new_item, item_dto.foods, db
                 )
+                new_item_can_eat_at = await self.item_can_eat_at_interface.create_item_can_eat_at(
+                    new_item.id, item_dto.can_eat_at, db
+                )
 
             new_item = self.item_repository.save(new_item, db)
             response = ItemDto(**new_item.__dict__)
-            response.foods = [new_item_food.food for new_item_food in new_item_foods]
+            response.foods = new_item_foods
+            response.can_eat_at = new_item_can_eat_at
             return response
         except Exception as e:
             db.rollback()
@@ -56,7 +63,7 @@ class ItemService:
 
     async def find_one_item(self, item_id: str, db: Session) -> Optional[ItemDto]:
         item = await self.item_repository.find_one_or_fail(
-            {"where": Item.id == item_id, "relations": ["foods"]}, db
+            {"where": Item.id == item_id, "relations": ["foods", "can_eat_at"]}, db
         )
 
         return ItemDto(**item.__dict__)
@@ -72,11 +79,20 @@ class ItemService:
                 list_foods = update_food_dto.foods
                 del update_food_dto.foods
 
+                list_can_eat_at = update_food_dto.can_eat_at
+                del update_food_dto.can_eat_at
+
                 response = await self.item_repository.update(id, update_food_dto, db)
 
                 if list_foods:
                     response["affected"] += (
                         await self.item_has_food_interface.update_item_has_food(id, list_foods, db)
+                    )["affected"]
+                if list_can_eat_at:
+                    response["affected"] += (
+                        await self.item_can_eat_at_interface.update_item_can_eat_at(
+                            id, list_can_eat_at, db
+                        )
                     )["affected"]
 
             db.commit()
@@ -84,3 +100,13 @@ class ItemService:
         except Exception as e:
             db.rollback()
             raise e
+
+    # ---------------------- INTERFACE METHODS ----------------------
+    async def find_one_item_by_description(
+        self, description: str, db: Session
+    ) -> Optional[ItemDto]:
+        item = await self.item_repository.find_one_or_fail(
+            {"where": Item.description == description}, db
+        )
+
+        return ItemDto(**item.__dict__)

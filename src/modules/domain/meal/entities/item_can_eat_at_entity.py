@@ -22,10 +22,10 @@ class ItemCanEatAt(BaseEntity):
     def __init__(
         self,
         type_of_meal_id: UUID,
-        food_id: UUID,
+        item_id: UUID,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.type_of_meal_id = type_of_meal_id
-        self.food_id = food_id
+        self.item_id = item_id
