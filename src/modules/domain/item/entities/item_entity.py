@@ -19,6 +19,9 @@ class Item(BaseEntity):
     diary_meals = relationship(
         "Diary", back_populates="item", uselist=True, cascade="all, delete-orphan"
     )
+    can_eat_at = relationship(
+        "ItemCanEatAt", back_populates="item", uselist=True, cascade="all, delete-orphan"
+    )
 
     def __init__(self, description: str, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -8,16 +8,16 @@ from src.modules.infrastructure.database.base_entity import BaseEntity
 
 
 @dataclass
-class FoodCanEatAt(BaseEntity):
+class ItemCanEatAt(BaseEntity):
     type_of_meal_id: UUID = Column(
         UUID(as_uuid=True), ForeignKey("type_of_meal.id", ondelete="CASCADE"), nullable=False
     )
-    type_of_meal = relationship("TypeOfMeal", back_populates="foods")
+    type_of_meal = relationship("TypeOfMeal", back_populates="items")
 
-    food_id: UUID = Column(
-        UUID(as_uuid=True), ForeignKey("food.id", ondelete="CASCADE"), nullable=False
+    item_id: UUID = Column(
+        UUID(as_uuid=True), ForeignKey("item.id", ondelete="CASCADE"), nullable=False
     )
-    food = relationship("Food", back_populates="can_eat_at")
+    item = relationship("Item", back_populates="can_eat_at")
 
     def __init__(
         self,
