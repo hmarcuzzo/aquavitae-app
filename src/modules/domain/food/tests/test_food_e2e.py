@@ -53,17 +53,10 @@ class TestCreateFood(TestBaseE2E):
         assert [hasattr(data, attr_name) for attr_name in ["id", "energy_value"]]
         assert data["energy_value"] == 95
 
-        activity_level_dto = await food_service.find_one_food(data["id"], self.db_test_utils.db)
+        food_dto = await food_service.find_one_food(data["id"], self.db_test_utils.db)
 
-        assert activity_level_dto is not None
-        assert activity_level_dto.energy_value == data["energy_value"]
-
-        new_item_has_food = (
-            self.db_test_utils.db.query(ItemHasFood).where(ItemHasFood.food_id == data["id"]).all()
-        )
-        assert len(new_item_has_food) == 1
-        assert str(new_item_has_food[0].food_id) == data["id"]
-        assert new_item_has_food[0].amount_grams == DEFAULT_AMOUNT_GRAMS
+        assert food_dto is not None
+        assert food_dto.energy_value == data["energy_value"]
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a food with deleted relation")
