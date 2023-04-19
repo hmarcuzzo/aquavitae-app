@@ -97,6 +97,7 @@ async def import_default_foods(df: pd.DataFrame, system_types: pd.DataFrame) -> 
     food_interface = FoodInterface()
 
     for index, row in df.iterrows():
+        row["Nome do alimento"] = row["Nome do alimento"].strip()
         with next(get_db()) as db_session:
             try:
                 await food_interface.find_one_food_by_description(
