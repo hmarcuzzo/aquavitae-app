@@ -209,23 +209,20 @@ class RecommendationSystemRepository:
 
     @staticmethod
     def get_allowed_items(allowed_food_ids: List[UUID], db: Session) -> List[Item]:
-        query = (
-            db.query(
-                Item,
-            )
-            .outerjoin(ItemHasFood, ItemHasFood.item_id == Item.id)
-            .outerjoin(
-                Food,
-                Food.id == ItemHasFood.food_id,
-            )
+        disallowed_foods_subquery = (
+            db.query(ItemHasFood.item_id)
+            .outerjoin(Food, Food.id == ItemHasFood.food_id)
             .where(
                 and_(
-                    Item.deleted_at == null(),
                     ItemHasFood.deleted_at == null(),
                     Food.deleted_at == null(),
-                    Food.id.in_(allowed_food_ids),
+                    Food.id.notin_(allowed_food_ids),
                 )
             )
+        ).correlate(Item)
+
+        query = db.query(Item).where(
+            and_(Item.deleted_at == null(), ~Item.id.in_(disallowed_foods_subquery))
         )
 
         return query.all()
