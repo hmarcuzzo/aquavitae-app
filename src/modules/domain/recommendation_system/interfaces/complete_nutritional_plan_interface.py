@@ -123,24 +123,19 @@ class CompleteNutritionalPlanInterface:
         items_dataframe: pd.DataFrame,
         food_preferences_dictionary: Dict[UUID, pd.DataFrame],
     ) -> None:
+        item_dataframe = items_dataframe[items_dataframe.id == current_item.id]
+
+        # Update can_eat_at values
+        can_eat_at_values = [can_eat_at.type_of_meal_id for can_eat_at in current_item.can_eat_at]
+        items_dataframe.at[item_dataframe.index[0], "can_eat_at"] = can_eat_at_values
+
         for item_has_food in current_item.foods:
             food_id = item_has_food.food_id
             food_preferences = food_preferences_dictionary[food_id]
             amount_multiplier = item_has_food.amount_grams / DEFAULT_AMOUNT_GRAMS
 
-            item_dataframe = items_dataframe[items_dataframe.id == current_item.id]
-
             # Add food score to item score
             items_dataframe.loc[item_dataframe.index, "score"] += food_preferences["score"].values
-
-            # Update can_eat_at values
-            can_eat_at_values = set(
-                [can_eat_at.type_of_meal_id for can_eat_at in item_has_food.food.can_eat_at]
-            )
-            current_values = set(items_dataframe.at[item_dataframe.index[0], "can_eat_at"])
-            items_dataframe.at[item_dataframe.index[0], "can_eat_at"] = list(
-                current_values.union(can_eat_at_values)
-            )
 
             # Add nutrient values to item nutrient values
             nutrient_columns = ["proteins", "lipids", "carbohydrates", "energy_value"]
