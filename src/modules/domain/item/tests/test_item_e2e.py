@@ -36,6 +36,7 @@ class TestCreateItem(TestBaseE2E):
                     "foods": [
                         {"amount_grams": 200, "food": "950d760f-ba5c-44ca-b4ec-313510e59beb"}
                     ],
+                    "can_eat_at": ["e3972574-30bd-4183-9475-b2b9ef477762"],
                 },
                 headers={"Authorization": f"Bearer {user_admin.access_token}"},
             )
@@ -45,7 +46,9 @@ class TestCreateItem(TestBaseE2E):
         assert response.status_code == HTTP_201_CREATED
         assert [hasattr(data, attr_name) for attr_name in ["id", "foods"]]
         assert len(data["foods"]) == 1
-        assert data["foods"][0] == "950d760f-ba5c-44ca-b4ec-313510e59beb"
+        assert data["foods"][0]["food"] == "950d760f-ba5c-44ca-b4ec-313510e59beb"
+        assert len(data["can_eat_at"]) == 1
+        assert data["can_eat_at"][0]["type_of_meal"] == "e3972574-30bd-4183-9475-b2b9ef477762"
 
         new_item = self.db_test_utils.db.query(Item).where(Item.id == data["id"]).first()
         assert len(new_item.foods) == 1
@@ -63,6 +66,10 @@ class TestCreateItem(TestBaseE2E):
                         {"amount_grams": 200, "food": "950d760f-ba5c-44ca-b4ec-313510e59beb"},
                         {"amount_grams": 150, "food": "e3ff57d6-eb77-48de-bb49-ff9201d95926"},
                     ],
+                    "can_eat_at": [
+                        "fcf05f25-3073-466c-9c2b-b4c7f4cea372",
+                        "e3972574-30bd-4183-9475-b2b9ef477762",
+                    ],
                 },
                 headers={"Authorization": f"Bearer {user_admin.access_token}"},
             )
@@ -72,12 +79,11 @@ class TestCreateItem(TestBaseE2E):
         assert response.status_code == HTTP_201_CREATED
         assert [hasattr(data, attr_name) for attr_name in ["id", "foods"]]
         assert len(data["foods"]) == 2
-        assert (
-            "950d760f-ba5c-44ca-b4ec-313510e59beb" and "e3ff57d6-eb77-48de-bb49-ff9201d95926"
-        ) in data["foods"]
+        assert len(data["can_eat_at"]) == 2
 
         new_item = self.db_test_utils.db.query(Item).where(Item.id == data["id"]).first()
         assert len(new_item.foods) == 2
+        assert len(new_item.can_eat_at) == 2
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a item with deleted food")
@@ -93,6 +99,7 @@ class TestCreateItem(TestBaseE2E):
                         "foods": [
                             {"amount_grams": 200, "food": "0e8dbb8d-bf41-484d-90af-7c44fc4cb6fc"}
                         ],
+                        "can_eat_at": ["fcf05f25-3073-466c-9c2b-b4c7f4cea372"],
                     },
                     headers={"Authorization": f"Bearer {user_admin.access_token}"},
                 )
@@ -297,13 +304,16 @@ class TestUpdateItem(TestBaseE2E):
                         {"amount_grams": 150, "food": "e3ff57d6-eb77-48de-bb49-ff9201d95926"},
                         {"amount_grams": 90, "food": "950d760f-ba5c-44ca-b4ec-313510e59beb"},
                     ],
+                    "can_eat_at": [
+                        "fcf05f25-3073-466c-9c2b-b4c7f4cea372",
+                    ],
                 },
                 headers={"Authorization": f"Bearer {user_admin.access_token}"},
             )
 
         assert response.status_code == HTTP_200_OK
         data = response.json()
-        assert data["affected"] == 3
+        assert data["affected"] == 4
 
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             response = await ac.get(

@@ -25,10 +25,7 @@ class FoodService:
     # ---------------------- PUBLIC METHODS ----------------------
     async def create_food(self, food_dto: CreateFoodDto, db: Session) -> Optional[FoodDto]:
         try:
-            with keep_nested_transaction(db):
-                new_food = await self.food_repository.create(food_dto, db)
-                await self.item_interface.create_item_from_food(new_food, db)
-
+            new_food = await self.food_repository.create(food_dto, db)
             new_food = self.food_repository.save(new_food, db)
             return FoodDto(**new_food.__dict__)
         except Exception as e:

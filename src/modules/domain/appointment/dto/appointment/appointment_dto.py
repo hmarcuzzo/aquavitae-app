@@ -1,8 +1,6 @@
-from datetime import date
+from datetime import datetime
 from typing import List, Optional, Union
 from uuid import UUID
-
-from sqlalchemy_utils import InstrumentedList
 
 from src.core.common.dto.base_dto import BaseDto
 from src.core.constants.enum.appointment_status import AppointmentStatus
@@ -16,14 +14,18 @@ from src.modules.infrastructure.user.dto.user_dto import UserDto
 
 
 class AppointmentDto(BaseDto):
-    date: date
+    date: datetime
     status: AppointmentStatus
     user: Union[UserDto, UUID]
+    nutritionist: Union[UserDto, UUID]
     appointment_has_goals: Optional[Union[List[AppointmentGoalDto], List[UUID]]]
 
     def __init__(self, **kwargs):
         if "user" not in kwargs and "user_id" in kwargs:
             kwargs["user"] = kwargs["user_id"]
+
+        if "nutritionist" not in kwargs and "nutritionist_id" in kwargs:
+            kwargs["nutritionist"] = kwargs["nutritionist_id"]
 
         if (
             "appointment_has_goals" in kwargs

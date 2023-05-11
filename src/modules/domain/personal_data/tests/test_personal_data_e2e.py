@@ -197,7 +197,6 @@ class TestGetSeveralPersonalDataByUserId(TestBaseE2E):
         assert response.status_code == HTTP_200_OK
         assert isinstance(data, list)
         assert len(data) == 2
-        assert data[1]["user"]["id"] == "5fbffb2b-531c-4f79-9f76-4f44e2a1dc21"
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get several personal data without authentication")

@@ -163,13 +163,16 @@ class TestGetAllFoodCategories(TestBaseE2E):
             if food_category["id"] == "75827c83-d4cb-46cb-a092-9ba2dd962023":
                 assert food_category["description"] == "Level 2"
                 assert food_category["level"] == 2
-                assert food_category["parent"] is None
+                assert food_category["parent"]["id"] == "42853fe7-5bf7-4503-af2c-2b284b5fdfbe"
 
             if food_category["id"] == "90e719b0-0f32-4236-82e7-033e2deae8fd":
                 assert food_category["description"] == "Level 3"
                 assert food_category["level"] == 3
                 assert food_category["parent"]["id"] == "75827c83-d4cb-46cb-a092-9ba2dd962023"
-                assert food_category["parent"]["parent"] is None
+                assert (
+                    food_category["parent"]["parent"]["id"]
+                    == "42853fe7-5bf7-4503-af2c-2b284b5fdfbe"
+                )
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get a list of all food categories without authentication")
@@ -208,7 +211,7 @@ class TestGetFoodCategoryById(TestBaseE2E):
         assert data["id"] == food_category_item["id"]
         assert data["description"] == food_category_item["description"]
         assert data["level"] == food_category_item["level"]
-        assert data["parent"] is None
+        assert data["parent"]["id"] == food_category_item["food_category_id"]
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get one food category without authentication")

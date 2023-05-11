@@ -1,5 +1,5 @@
 from math import floor
-from typing import List
+from typing import List, Tuple
 from uuid import UUID
 
 import pandas as pd
@@ -37,9 +37,9 @@ class FindUserFoodPreferencesInterface:
         self.nutritional_plan_interface = NutritionalPlanInterface()
         self.food_category_interface = FoodCategoryInterface()
 
-        self.PERIOD_TO_FATIGUE = 30
-        self.AMOUNT_TO_FATIGUE = 1
-        self.PERIOD_TO_ANALYZE = 100
+        self.PERIOD_TO_FATIGUE_DAYS = 30
+        self.PERIOD_TO_ANALYZE_DAYS = 100
+        self.AMOUNT_TO_FATIGUE = 45
         self.PERCENTAGE_NEAR_FATIGUE = 0.9
         self.PERCENTAGE_FOR_IDENTIFICATION = 0.15
 
@@ -90,7 +90,20 @@ class FindUserFoodPreferencesInterface:
         )
         user_preferences = self.rs_repository.get_user_food_preferences(user_id, db_session)
 
-        hashable_key = (tuple(all_food_categories), tuple(user_preferences), tuple(all_foods))
+        fatigued_food = self.rs_repository.get_fatigued_food_from_user(
+            db_session, user_id, self.PERIOD_TO_FATIGUE_DAYS, self.AMOUNT_TO_FATIGUE
+        )
+        user_consumption = self.rs_repository.get_user_consumption_last_days(
+            db_session, user_id, fatigued_food, self.PERIOD_TO_ANALYZE_DAYS
+        )
+
+        hashable_key = (
+            tuple(all_foods),
+            tuple(all_food_categories),
+            tuple(user_preferences),
+            tuple(fatigued_food),
+            tuple(user_consumption),
+        )
         if user_food_preference_cache.get(hashable_key):
             return user_food_preference_cache[hashable_key]
 
@@ -109,7 +122,7 @@ class FindUserFoodPreferencesInterface:
                 food_preference, food_data, current_food, current_category, foods_to_grade
             )
 
-        self.__award_score_by_consumption(db_session, user_id, food_data)
+        self.__award_score_by_consumption(food_data, fatigued_food, user_consumption)
 
         food_data.sort_values("score", ascending=False, inplace=True)
         result = [DetailedUserPreferencesTable(**food) for food in food_data.to_dict("records")]
@@ -174,20 +187,18 @@ class FindUserFoodPreferencesInterface:
             if not positive:
                 score *= -1
 
-            FindUserFoodPreferencesInterface.__award_score(foods_dt, food_to_grade.id, score)
+            foods_dt = FindUserFoodPreferencesInterface.__award_score(
+                foods_dt, food_to_grade.id, score
+            )
 
     def __award_score_by_consumption(
-        self, db_session: Session, user_id: str, foods_dt: pd.DataFrame
+        self,
+        foods_dt: pd.DataFrame,
+        fatigued_food: List[UUID],
+        user_consumption: List[Tuple[UUID, int]],
     ) -> None:
-        fatigued_food = self.rs_repository.get_fatigued_food_from_user(
-            db_session, user_id, self.PERIOD_TO_FATIGUE, self.AMOUNT_TO_FATIGUE
-        )
-        user_consumption = self.rs_repository.get_user_consumption_last_days(
-            db_session, user_id, fatigued_food, self.PERIOD_TO_ANALYZE
-        )
-
         for food_id in fatigued_food:
-            FindUserFoodPreferencesInterface.__award_score(foods_dt, food_id, -100)
+            foods_dt = FindUserFoodPreferencesInterface.__award_score(foods_dt, food_id, -100)
 
         for food_id, food_amount in user_consumption:
             """It sets the score based on the amount consumed, if it's close to the amount of fatigue it receives
@@ -206,8 +217,9 @@ class FindUserFoodPreferencesInterface:
                 else 20
             )
 
-            FindUserFoodPreferencesInterface.__award_score(foods_dt, food_id, score)
+            foods_dt = FindUserFoodPreferencesInterface.__award_score(foods_dt, food_id, score)
 
     @staticmethod
-    def __award_score(foods_dt: pd.DataFrame, food_id: UUID, score: int) -> None:
+    def __award_score(foods_dt: pd.DataFrame, food_id: UUID, score: int) -> pd.DataFrame:
         foods_dt.loc[foods_dt["id"] == food_id, "score"] += score
+        return foods_dt

@@ -55,7 +55,9 @@ class QueryConstructor:
             elif key == "take":
                 query = query.limit(options_dict[key])
             elif key == "relations":
-                query = query.options(joinedload(getattr(entity, *options_dict[key])))
+                query = query.options(
+                    joinedload(getattr(entity, relation)) for relation in options_dict[key]
+                )
             else:
                 raise KeyError(f"Unknown option: {key} in FindOptions")
 

@@ -54,7 +54,7 @@ To build the project run the following commands in terminal, step by step:
    
 5. Fill the database with initial data
     ```
-    $ python src/core/scripts/initial_data.py
+    $ python src/core/scripts/initial_data/main.py
     ```
    
 ### With Docker
@@ -73,7 +73,7 @@ data
     ```
     $ docker exec -it <CONTAINER_NAME> bash
     $ alembic upgrade head
-    $ python src/core/scripts/initial_data.py
+    $ python src/core/scripts/initial_data/main.py
     ```
 
   

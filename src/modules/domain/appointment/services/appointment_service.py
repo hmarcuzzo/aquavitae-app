@@ -8,6 +8,8 @@ from src.core.common.dto.pagination_response_dto import (
     create_pagination_response_dto,
     PaginationResponseDto,
 )
+from src.core.constants.enum.user_role import UserRole
+from src.core.types.exceptions_type import BadRequestException
 from src.core.types.find_many_options_type import FindManyOptions
 from src.core.types.update_result_type import UpdateResult
 from src.modules.domain.appointment.dto.appointment.appointment_dto import AppointmentDto
@@ -25,12 +27,15 @@ from src.modules.domain.appointment.repositories.appointment_has_appointment_goa
     AppointmentHasAppointmentGoalRepository,
 )
 from src.modules.domain.appointment.repositories.appointment_repository import AppointmentRepository
+from src.modules.infrastructure.user.entities.user_entity import User
+from src.modules.infrastructure.user.user_interface import UserInterface
 
 
 class AppointmentService:
     def __init__(self):
         self.appointment_repository = AppointmentRepository()
         self.appointment_has_appointment_goal_repository = AppointmentHasAppointmentGoalRepository()
+        self.user_interface = UserInterface()
 
     # ---------------------- PUBLIC METHODS ----------------------
     async def create_appointment(
@@ -38,6 +43,8 @@ class AppointmentService:
     ) -> Optional[AppointmentDto]:
         try:
             with db.begin_nested():
+                await self.__check_nutritionist(str(appointment_dto.nutritionist_id), db)
+
                 goals = deepcopy(appointment_dto.goals) if appointment_dto.goals else []
                 delattr(appointment_dto, "goals")
 
@@ -94,6 +101,9 @@ class AppointmentService:
     ) -> Optional[UpdateResult]:
         try:
             with db.begin_nested():
+                if update_appointment_dto.nutritionist_id:
+                    await self.__check_nutritionist(str(update_appointment_dto.nutritionist_id), db)
+
                 goals = (
                     deepcopy(update_appointment_dto.goals) if update_appointment_dto.goals else []
                 )
@@ -137,3 +147,15 @@ class AppointmentService:
 
     async def delete_appointment(self, appointment_id: str, db: Session) -> Optional[UpdateResult]:
         return await self.appointment_repository.soft_delete(appointment_id, db)
+
+    async def __check_nutritionist(self, nutritionist_id: str, db: Session) -> bool:
+        nutritionist = await self.user_interface.find_one_user(
+            db, {"where": User.id == nutritionist_id}
+        )
+
+        if nutritionist.role != UserRole.NUTRITIONIST:
+            raise BadRequestException(
+                "The user is not a nutritionist", loc=["body", "nutritionist_id"]
+            )
+
+        return True

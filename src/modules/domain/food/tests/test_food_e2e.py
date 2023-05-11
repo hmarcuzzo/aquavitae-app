@@ -53,17 +53,10 @@ class TestCreateFood(TestBaseE2E):
         assert [hasattr(data, attr_name) for attr_name in ["id", "energy_value"]]
         assert data["energy_value"] == 95
 
-        activity_level_dto = await food_service.find_one_food(data["id"], self.db_test_utils.db)
+        food_dto = await food_service.find_one_food(data["id"], self.db_test_utils.db)
 
-        assert activity_level_dto is not None
-        assert activity_level_dto.energy_value == data["energy_value"]
-
-        new_item_has_food = (
-            self.db_test_utils.db.query(ItemHasFood).where(ItemHasFood.food_id == data["id"]).all()
-        )
-        assert len(new_item_has_food) == 1
-        assert str(new_item_has_food[0].food_id) == data["id"]
-        assert new_item_has_food[0].amount_grams == DEFAULT_AMOUNT_GRAMS
+        assert food_dto is not None
+        assert food_dto.energy_value == data["energy_value"]
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a food with deleted relation")
@@ -165,9 +158,12 @@ class TestGetAllFoods(TestBaseE2E):
             if food_category["id"] == "950d760f-ba5c-44ca-b4ec-313510e59beb":
                 assert food_category["description"] == "Food 1"
                 assert (
-                    food_category["food_category"]["id"] == "75827c83-d4cb-46cb-a092-9ba2dd962023"
+                    food_category["food_category"]["id"] == "90e719b0-0f32-4236-82e7-033e2deae8fd"
                 )
-                assert food_category["food_category"]["parent"] is None
+                assert (
+                    food_category["food_category"]["parent"]["id"]
+                    == "75827c83-d4cb-46cb-a092-9ba2dd962023"
+                )
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get a list of all food without authentication")

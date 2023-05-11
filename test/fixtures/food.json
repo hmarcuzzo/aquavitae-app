@@ -12,7 +12,7 @@
     "potassium": 0,
     "phosphorus": 0,
     "sodium": 0,
-    "food_category_id": "75827c83-d4cb-46cb-a092-9ba2dd962023"
+    "food_category_id": "90e719b0-0f32-4236-82e7-033e2deae8fd"
   },
   {
     "id": "e3ff57d6-eb77-48de-bb49-ff9201d95926",
@@ -35,6 +35,21 @@
     "updated_at": "2022-07-26 15:58:40.502594 +00:00",
     "deleted_at": "2022-07-26 15:58:40.502594 +00:00",
     "description": "Food 3",
+    "proteins": 0,
+    "lipids": 0,
+    "carbohydrates": 0,
+    "energy_value": 105,
+    "potassium": 91,
+    "phosphorus": 0,
+    "sodium": 0,
+    "food_category_id": "90e719b0-0f32-4236-82e7-033e2deae8fd"
+  },
+  {
+    "id": "6f5d502c-2301-4afe-aca7-1c86486153ff",
+    "created_at": "2022-07-26 15:58:40.502594 +00:00",
+    "updated_at": "2022-07-26 15:58:40.502594 +00:00",
+    "deleted_at": null,
+    "description": "Food 4",
     "proteins": 0,
     "lipids": 0,
     "carbohydrates": 0,

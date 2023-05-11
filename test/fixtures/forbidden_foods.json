@@ -1,0 +1,10 @@
+[
+  {
+    "id": "be889014-9e72-4ec3-a864-fb70e1b4a43e",
+    "created_at": "2023-02-08 00:43:56.054097 +00:00",
+    "updated_at": "2023-02-08 00:43:56.054097 +00:00",
+    "deleted_at": null,
+    "food_id": "6f5d502c-2301-4afe-aca7-1c86486153ff",
+    "nutritional_plan_id": "9d64aec5-3ddb-4d5f-a824-341f0a4928f1"
+  }
+]
