@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -31,13 +31,12 @@ class FoodCategoryService:
     ) -> Optional[FoodCategoryDto]:
         new_food_category = await self.food_category_repository.create(food_category_dto, db)
 
-        new_food_category = await self.food_category_repository.save(new_food_category, db)
+        new_food_category = self.food_category_repository.save(new_food_category, db)
         return FoodCategoryDto(**new_food_category.__dict__)
 
     async def get_all_food_category_paginated(
         self, pagination: FindManyOptions, db: Session
     ) -> Optional[PaginationResponseDto[FoodCategoryDto]]:
-        pagination["relations"] = ["food_category"]
         [
             all_food_categories,
             total,
@@ -56,7 +55,7 @@ class FoodCategoryService:
         food_category = await self.food_category_repository.find_one_or_fail(
             {
                 "where": FoodCategory.id == food_category_id,
-                "relations": ["food_category"],
+                "relations": ["parent"],
             },
             db,
         )
@@ -72,3 +71,24 @@ class FoodCategoryService:
         self, food_category_id: str, db: Session
     ) -> Optional[UpdateResult]:
         return await self.food_category_repository.soft_delete(food_category_id, db)
+
+    # ---------------------- INTERFACE METHODS ----------------------
+    async def find_one_category_by_description(
+        self, description: str, db: Session
+    ) -> Optional[FoodCategory]:
+        food_category = await self.food_category_repository.find_one_or_fail(
+            {
+                "where": FoodCategory.description == description,
+            },
+            db,
+        )
+
+        return food_category
+
+    async def get_all_food_categories(self, db: Session) -> Optional[List[FoodCategory]]:
+        return await self.food_category_repository.find(
+            {
+                "relations": ["parent", "foods"],
+            },
+            db,
+        )

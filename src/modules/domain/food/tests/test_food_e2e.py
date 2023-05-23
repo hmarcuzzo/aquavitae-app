@@ -11,13 +11,11 @@ from starlette.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
-from src.core.types.exceptions_type import NotFoundException
+from src.core.constants.default_values import DEFAULT_AMOUNT_GRAMS
 from src.main import app
-from src.modules.domain.food.entities.food_category_entity import FoodCategory
 from src.modules.domain.food.entities.food_entity import Food
-from src.modules.domain.food.repositories.food_repository import FoodRepository
-from src.modules.domain.food.services.food_category_service import FoodCategoryService
 from src.modules.domain.food.services.food_service import FoodService
+from src.modules.domain.item.entities.item_has_food_entity import ItemHasFood
 from src.modules.infrastructure.auth.dto.login_payload_dto import LoginPayloadDto
 from test.test_base_e2e import TestBaseE2E
 
@@ -55,10 +53,10 @@ class TestCreateFood(TestBaseE2E):
         assert [hasattr(data, attr_name) for attr_name in ["id", "energy_value"]]
         assert data["energy_value"] == 95
 
-        activity_level_dto = await food_service.find_one_food(data["id"], self.db_test_utils.db)
+        food_dto = await food_service.find_one_food(data["id"], self.db_test_utils.db)
 
-        assert activity_level_dto is not None
-        assert activity_level_dto.energy_value == data["energy_value"]
+        assert food_dto is not None
+        assert food_dto.energy_value == data["energy_value"]
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a food with deleted relation")
@@ -147,6 +145,7 @@ class TestGetAllFoods(TestBaseE2E):
             response = await ac.get(
                 self.route,
                 headers={"Authorization": f"Bearer {user_admin.access_token}"},
+                params={"columns": ["description", "food_category"]},
             )
 
         body = response.json()
@@ -159,9 +158,12 @@ class TestGetAllFoods(TestBaseE2E):
             if food_category["id"] == "950d760f-ba5c-44ca-b4ec-313510e59beb":
                 assert food_category["description"] == "Food 1"
                 assert (
-                    food_category["food_category"]["id"] == "75827c83-d4cb-46cb-a092-9ba2dd962023"
+                    food_category["food_category"]["id"] == "90e719b0-0f32-4236-82e7-033e2deae8fd"
                 )
-                assert food_category["food_category"]["food_category"] is None
+                assert (
+                    food_category["food_category"]["parent"]["id"]
+                    == "75827c83-d4cb-46cb-a092-9ba2dd962023"
+                )
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get a list of all food without authentication")
@@ -243,9 +245,7 @@ class TestDeleteFood(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Delete food already deleted")
-    async def test_delete_food_category_already_deleted(
-        self, user_admin: Optional[LoginPayloadDto]
-    ) -> None:
+    async def test_delete_food_already_deleted(self, user_admin: Optional[LoginPayloadDto]) -> None:
         food_item = self.db_test_utils.get_entity_objects(Food)[0]
 
         async with AsyncClient(app=app, base_url=self.base_url) as ac:

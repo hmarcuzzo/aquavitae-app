@@ -1,4 +1,4 @@
-from src.modules.domain.item.entities.item_has_food import ItemHasFood
+from src.modules.domain.item.entities.item_has_food_entity import ItemHasFood
 from src.modules.infrastructure.database.base_repository import BaseRepository
 
 

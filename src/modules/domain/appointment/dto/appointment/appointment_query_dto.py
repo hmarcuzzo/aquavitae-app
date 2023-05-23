@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, constr, Extra
+from pydantic import BaseModel, constr, Extra, Field
 
 from src.core.constants.regex_expressions import REGEX_ORDER_BY_QUERY
 
@@ -8,6 +8,8 @@ from src.core.constants.regex_expressions import REGEX_ORDER_BY_QUERY
 class FindAllAppointmentQueryDto(BaseModel):
     date: Optional[constr()]
     status: Optional[constr()]
+    user_id: Optional[constr()]
+    nutritionist_id: Optional[constr()]
 
     class Config:
         extra = Extra.forbid

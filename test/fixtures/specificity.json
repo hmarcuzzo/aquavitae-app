@@ -1,0 +1,29 @@
+[
+  {
+    "id": "4ae9ee99-8765-4002-b3a4-19b1ced26577",
+    "created_at": "2023-02-08 00:43:56.054097 +00:00",
+    "updated_at": "2023-02-08 00:43:56.054097 +00:00",
+    "deleted_at": null,
+    "specificity_type_id": "ac76ff1e-ca2f-4c1d-ad25-853e1fd6746a",
+    "food_id": "950d760f-ba5c-44ca-b4ec-313510e59beb",
+    "user_id": "3e535e14-d26c-4dc8-ae28-096ff05453fb"
+  },
+  {
+    "id": "58c3a2f1-731b-472b-8904-171f82964b6e",
+    "created_at": "2023-02-08 00:43:56.054097 +00:00",
+    "updated_at": "2023-02-08 00:43:56.054097 +00:00",
+    "deleted_at": null,
+    "specificity_type_id": "51d998b2-ac0f-4a33-aedc-375221b0ed0c",
+    "food_id": "e3ff57d6-eb77-48de-bb49-ff9201d95926",
+    "user_id": "3e535e14-d26c-4dc8-ae28-096ff05453fb"
+  },
+  {
+    "id": "f9bb7740-8a1b-4887-9aea-91e05bcddc5a",
+    "created_at": "2023-02-08 00:43:56.054097 +00:00",
+    "updated_at": "2023-02-08 00:43:56.054097 +00:00",
+    "deleted_at": null,
+    "specificity_type_id": "39f57c3b-a127-4dce-8e4b-5d52b0f50c1b",
+    "food_id": "6f5d502c-2301-4afe-aca7-1c86486153ff",
+    "user_id": "3e535e14-d26c-4dc8-ae28-096ff05453fb"
+  }
+]

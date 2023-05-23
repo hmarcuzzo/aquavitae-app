@@ -15,11 +15,11 @@ class FoodCategory(BaseEntity):
     food_category_id: UUID = Column(
         UUID(as_uuid=True), ForeignKey("food_category.id"), nullable=True
     )
-    food_category = relationship(
+    parent = relationship(
         "FoodCategory",
         primaryjoin="food_category.c.id==food_category.c.food_category_id",
         remote_side="food_category.c.id",
-        backref=backref("food_categories"),
+        backref=backref("children"),
     )
 
     foods = relationship("Food", back_populates="food_category", cascade="all, delete-orphan")

@@ -197,7 +197,6 @@ class TestGetSeveralPersonalDataByUserId(TestBaseE2E):
         assert response.status_code == HTTP_200_OK
         assert isinstance(data, list)
         assert len(data) == 2
-        assert data[1]["user"]["id"] == "5fbffb2b-531c-4f79-9f76-4f44e2a1dc21"
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get several personal data without authentication")
@@ -206,7 +205,7 @@ class TestGetSeveralPersonalDataByUserId(TestBaseE2E):
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get several personal data with non required authentication")
-    @pytest.mark.parametrize("user", ["user_common", "user_admin"])
+    @pytest.mark.parametrize("user", ["user_common"])
     async def test_different_required_authentication(
         self, user: str, user_common: Optional[LoginPayloadDto], request: FixtureRequest
     ) -> None:

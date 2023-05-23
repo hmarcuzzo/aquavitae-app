@@ -11,6 +11,9 @@ class BaseOptionsDto(TypedDict):
 
 class BaseDto(BaseModel):
     id: UUID
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
     deleted_at: Optional[datetime]
+
+    def __hash__(self):
+        return hash(self.id)

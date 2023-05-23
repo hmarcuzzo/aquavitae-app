@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, constr, EmailStr, Extra
+from pydantic import BaseModel, EmailStr, Extra
 
 
 class UpdateUserDto(BaseModel):

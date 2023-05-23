@@ -13,6 +13,8 @@ from starlette.status import (
 
 from src.core.constants.enum.user_role import UserRole
 from src.main import app
+from src.modules.domain.antecedent.entities.antecedent_entity import Antecedent
+from src.modules.domain.antecedent.services.antecedent_service import AntecedentService
 from src.modules.domain.anthropometric_data.entities.anthropometric_data_entity import (
     AnthropometricData,
 )
@@ -23,8 +25,6 @@ from src.modules.domain.personal_data.services.personal_data_service import Pers
 from src.modules.infrastructure.auth.dto.login_payload_dto import LoginPayloadDto
 from src.modules.infrastructure.user.user_service import UserService
 from test.test_base_e2e import TestBaseE2E
-
-from src.core.types.exceptions_type import NotFoundException
 
 CONTROLLER = "user"
 user_service = UserService()
@@ -265,8 +265,15 @@ class TestDeleteUser(TestBaseE2E):
             {"where": AnthropometricData.user_id == user_common.user.id, "skip": 0, "take": 10},
             self.db_test_utils.db,
         )
-
         assert response.count == 0
+
+        antecedent_service = AntecedentService()
+        response = await antecedent_service.antecedent_repository.find(
+            {"where": Antecedent.user_id == user_common.user.id},
+            self.db_test_utils.db,
+        )
+        assert isinstance(response, list)
+        assert len(response) == 0
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Delete the same user twice")

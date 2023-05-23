@@ -1,0 +1,12 @@
+[
+  {
+    "id": "35699a87-7354-4519-a569-defd76aff95c",
+    "created_at": "2023-02-08 00:43:56.054097 +00:00",
+    "updated_at": "2023-02-08 00:43:56.054097 +00:00",
+    "deleted_at": null,
+    "description": "Pequeno Almoço",
+    "start_time": "08:00:00.000000 +00:00",
+    "end_time": "09:00:00.000000 +00:00",
+    "type_of_meal_id": "fcf05f25-3073-466c-9c2b-b4c7f4cea372"
+  }
+]

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -8,9 +8,10 @@ from src.core.constants.enum.appointment_status import AppointmentStatus
 
 
 class UpdateAppointmentDto(BaseModel):
-    date: Optional[date]
+    date: Optional[datetime]
     status: Optional[AppointmentStatus]
     user_id: Optional[UUID] = Field(alias="user")
+    nutritionist_id: Optional[UUID] = Field(alias="nutritionist")
     goals: Optional[List[UUID]]
 
     class Config:

@@ -48,12 +48,16 @@ async def create_appointment_goal(
 @appointment_goal_router.get(
     "/get",
     response_model=PaginationResponseDto[AppointmentGoalDto],
+    response_model_exclude_unset=True,
     dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_all_appointment_goal(
     pagination: FindManyOptions = Depends(
         GetPagination(
-            AppointmentGoal, FindAllAppointmentGoalQueryDto, OrderByAppointmentGoalQueryDto
+            AppointmentGoal,
+            AppointmentGoalDto,
+            FindAllAppointmentGoalQueryDto,
+            OrderByAppointmentGoalQueryDto,
         )
     ),
     database: Session = Depends(get_db),

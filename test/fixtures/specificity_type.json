@@ -1,0 +1,37 @@
+[
+  {
+    "id": "39f57c3b-a127-4dce-8e4b-5d52b0f50c1b",
+    "created_at": "2023-02-08 00:44:22.720750 +00:00",
+    "updated_at": "2023-02-08 00:44:22.720750 +00:00",
+    "deleted_at": null,
+    "description": "ALLERGIC"
+  },
+  {
+    "id": "48da2d8f-be70-4376-a26b-03cb02a55993",
+    "created_at": "2023-02-08 00:44:22.724433 +00:00",
+    "updated_at": "2023-02-08 00:44:22.724433 +00:00",
+    "deleted_at": null,
+    "description": "INTOLERANT"
+  },
+  {
+    "id": "5a0ca9e9-a5fe-4069-9b0a-1a2117eddade",
+    "created_at": "2023-02-08 00:44:22.727117 +00:00",
+    "updated_at": "2023-02-08 00:44:22.727117 +00:00",
+    "deleted_at": null,
+    "description": "SENSITIVE"
+  },
+  {
+    "id": "ac76ff1e-ca2f-4c1d-ad25-853e1fd6746a",
+    "created_at": "2023-02-08 00:44:22.729626 +00:00",
+    "updated_at": "2023-02-08 00:44:22.729626 +00:00",
+    "deleted_at": null,
+    "description": "LIKE"
+  },
+  {
+    "id": "51d998b2-ac0f-4a33-aedc-375221b0ed0c",
+    "created_at": "2023-02-08 00:44:22.732411 +00:00",
+    "updated_at": "2023-02-08 00:44:22.732411 +00:00",
+    "deleted_at": null,
+    "description": "DON'T LIKE"
+  }
+]
