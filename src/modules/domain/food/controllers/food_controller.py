@@ -42,11 +42,12 @@ async def create_food(
 @food_router.get(
     "/get",
     response_model=PaginationResponseDto[FoodDto],
+    response_model_exclude_unset=True,
     dependencies=[Depends(Auth([UserRole.ADMIN, UserRole.NUTRITIONIST]))],
 )
 async def get_all_food_paginated(
     pagination: FindManyOptions = Depends(
-        GetPagination(Food, FindAllFoodQueryDto, OrderByFoodQueryDto)
+        GetPagination(Food, FoodDto, FindAllFoodQueryDto, OrderByFoodQueryDto)
     ),
     database: Session = Depends(get_db),
 ) -> Optional[PaginationResponseDto[FoodDto]]:

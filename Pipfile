@@ -81,6 +81,13 @@ pycodestyle = "*"
 pytest-testdox = "*"
 pytest-cov = "*"
 pillow = "*"
+pytest-reportlog = "*"
+pytest-duration-insights = "*"
+pytest-durations = "*"
+pandas = "*"
+openpyxl = "*"
+odfpy = "*"
+cachetools = "*"
 
 [dev-packages]
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqlalchemy import Boolean, Column, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, Enum, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -10,6 +10,7 @@ from src.modules.infrastructure.database.base_entity import BaseEntity
 
 @dataclass
 class NutritionalPlan(BaseEntity):
+    validate_date: Date = Column(Date, nullable=False)
     calories_limit: Integer = Column(Integer, nullable=True, default=0)
     lipids_limit: Integer = Column(Integer, nullable=True, default=0)
     proteins_limit: Integer = Column(Integer, nullable=True, default=0)

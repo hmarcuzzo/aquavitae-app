@@ -1,0 +1,20 @@
+[
+  {
+    "id": "a241fd4a-4943-4406-bfa8-347c4a5df2d3",
+    "created_at": "2023-02-16 18:39:14.228845 +00:00",
+    "updated_at": "2023-02-16 18:39:14.228845 +00:00",
+    "deleted_at": null,
+    "description": "Antecedent 1",
+    "antecedent_type_id": "68041164-e1e9-49d7-8c5f-6626066de67b",
+    "user_id": "3e535e14-d26c-4dc8-ae28-096ff05453fb"
+  },
+  {
+    "id": "eff6135e-aac8-435a-8d28-012a95e31620",
+    "created_at": "2023-02-16 18:40:13.038648 +00:00",
+    "updated_at": "2023-02-16 18:40:13.038648 +00:00",
+    "deleted_at": null,
+    "description": "Antecedent 2",
+    "antecedent_type_id": "d1a6f6e7-fab1-4525-be7f-1c3a0ae6e997",
+    "user_id": "3e535e14-d26c-4dc8-ae28-096ff05453fb"
+  }
+]

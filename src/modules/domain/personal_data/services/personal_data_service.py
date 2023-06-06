@@ -27,7 +27,7 @@ class PersonalDataService:
     ) -> Optional[PersonalDataDto]:
         new_personal_data = await self.personal_data_repository.create(personal_data_dto, db)
 
-        new_personal_data = await self.personal_data_repository.save(new_personal_data, db)
+        new_personal_data = self.personal_data_repository.save(new_personal_data, db)
         return PersonalDataDto(**new_personal_data.__dict__)
 
     async def find_one_personal_data(self, user_id: str, db: Session) -> Optional[PersonalDataDto]:

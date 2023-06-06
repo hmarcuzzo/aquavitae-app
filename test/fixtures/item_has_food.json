@@ -1,0 +1,29 @@
+[
+  {
+    "id": "b881915d-950e-470d-b2b9-58fa902bb862",
+    "created_at": "2022-07-26 15:57:40.502594 +00:00",
+    "updated_at": "2022-07-26 15:57:40.502594 +00:00",
+    "deleted_at": null,
+    "amount_grams": 100,
+    "item_id": "a903fd03-26a5-449f-99f4-e83ea35d70e6",
+    "food_id": "950d760f-ba5c-44ca-b4ec-313510e59beb"
+  },
+  {
+    "id": "5edf737e-25bb-4235-989f-e4f553ff488d",
+    "created_at": "2022-07-26 15:58:40.502594 +00:00",
+    "updated_at": "2022-07-26 15:58:40.502594 +00:00",
+    "deleted_at": null,
+    "amount_grams": 150,
+    "item_id": "73d15016-d10a-4c14-a436-c3a59d1dfb93",
+    "food_id": "950d760f-ba5c-44ca-b4ec-313510e59beb"
+  },
+  {
+    "id": "8f093819-2f63-4eda-8483-782be222c5f5",
+    "created_at": "2022-07-26 15:58:40.502594 +00:00",
+    "updated_at": "2022-07-26 15:58:40.502594 +00:00",
+    "deleted_at": null,
+    "amount_grams": 200,
+    "item_id": "73d15016-d10a-4c14-a436-c3a59d1dfb93",
+    "food_id": "e3ff57d6-eb77-48de-bb49-ff9201d95926"
+  }
+]

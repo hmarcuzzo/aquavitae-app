@@ -6,6 +6,7 @@ from httpx import AsyncClient
 from starlette.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
@@ -33,14 +34,15 @@ class TestCreateAppointment(TestBaseE2E):
     route = f"/{CONTROLLER}/create"
 
     @pytest.mark.asyncio
-    @pytest.mark.it("Success: Create a appointment")
+    @pytest.mark.it("Success: Create an appointment")
     async def test_create_new_appointment(self, user_admin: Optional[LoginPayloadDto]) -> None:
         async with AsyncClient(app=app, base_url=self.base_url) as ac:
             response = await ac.post(
                 self.route,
                 json={
-                    "date": "2022-09-30",
+                    "date": "2022-09-30 08:43:56.054097",
                     "user": "3e535e14-d26c-4dc8-ae28-096ff05453fb",
+                    "nutritionist": "4fbc9c6a-8103-417b-9e76-2856d247b694",
                     "goals": ["dcf18594-13a1-4f8d-be14-8a6149a941e7"],
                 },
                 headers={"Authorization": f"Bearer {user_admin.access_token}"},
@@ -50,6 +52,29 @@ class TestCreateAppointment(TestBaseE2E):
 
         assert response.status_code == HTTP_201_CREATED
         assert data["status"] == "SCHEDULED"
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Failure: Create an appointment with user in nutritionist role")
+    async def test_create_appointment_fake_nutritionist(
+        self, user_admin: Optional[LoginPayloadDto]
+    ) -> None:
+        async with AsyncClient(app=app, base_url=self.base_url) as ac:
+            response = await ac.post(
+                self.route,
+                json={
+                    "date": "2022-09-30 08:43:56.054097",
+                    "user": "3e535e14-d26c-4dc8-ae28-096ff05453fb",
+                    "nutritionist": "5fbffb2b-531c-4f79-9f76-4f44e2a1dc21",
+                    "goals": ["dcf18594-13a1-4f8d-be14-8a6149a941e7"],
+                },
+                headers={"Authorization": f"Bearer {user_admin.access_token}"},
+            )
+
+        data = response.json()
+
+        assert response.status_code == HTTP_400_BAD_REQUEST
+        assert data["detail"][0]["loc"] == ["body", "nutritionist_id"]
+        assert data["detail"][0]["msg"] == "The user is not a nutritionist"
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Create a appointment without required fields")
@@ -79,7 +104,7 @@ class TestCreateAppointment(TestBaseE2E):
                 await ac.post(
                     self.route,
                     json={
-                        "date": "2022-09-30",
+                        "date": "2022-09-30 02:43:56.054097",
                         "user": "3e535e14-d26c-4dc8-ae28-096ff05453fb",
                         "goals": ["dcf18594-13a1-4f8d-be14-8a6149a941e7"],
                     },
@@ -95,7 +120,7 @@ class TestCreateAppointment(TestBaseE2E):
                 await ac.post(
                     self.route,
                     json={
-                        "date": "2022-09-30",
+                        "date": "2022-09-30 05:43:56.054097",
                         "user": "3e535e14-d26c-4dc8-ae28-096ff05453fb",
                         "goals": ["dcf18594-13a1-4f8d-be14-8a6149a941e7"],
                     },
@@ -120,7 +145,7 @@ class TestGetAllAppointment(TestBaseE2E):
 
         assert response.status_code == HTTP_200_OK
         assert isinstance(data, dict)
-        assert data["data"][0]["id"] == "839f3db0-63e1-4e9d-af47-9000fc29a722"
+        assert "839f3db0-63e1-4e9d-af47-9000fc29a722" in [element["id"] for element in data["data"]]
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Get appointment without authentication")
@@ -210,7 +235,25 @@ class TestUpdateAppointment(TestBaseE2E):
         data = response.json()
 
         assert response.status_code == HTTP_200_OK
-        assert data["appointment_goals"] == []
+        assert data["appointment_has_goals"] == []
+
+    @pytest.mark.asyncio
+    @pytest.mark.it("Failure: Update appointment with user in nutritionist role")
+    async def test_update_appointment_fake_nutritionist(
+        self, user_admin: Optional[LoginPayloadDto]
+    ) -> None:
+        async with AsyncClient(app=app, base_url=self.base_url) as ac:
+            response = await ac.patch(
+                self.route + "839f3db0-63e1-4e9d-af47-9000fc29a722",
+                json={"nutritionist": "5fbffb2b-531c-4f79-9f76-4f44e2a1dc21"},
+                headers={"Authorization": f"Bearer {user_admin.access_token}"},
+            )
+
+        data = response.json()
+
+        assert response.status_code == HTTP_400_BAD_REQUEST
+        assert data["detail"][0]["loc"] == ["body", "nutritionist_id"]
+        assert data["detail"][0]["msg"] == "The user is not a nutritionist"
 
     @pytest.mark.asyncio
     @pytest.mark.it("Failure: Update appointment without authentication")

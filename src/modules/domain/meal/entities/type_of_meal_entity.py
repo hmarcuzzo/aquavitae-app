@@ -14,8 +14,8 @@ class TypeOfMeal(BaseEntity):
     proteins_percentage: Float = Column(Float, nullable=True, default=0)
     carbohydrates_percentage: Float = Column(Float, nullable=True, default=0)
 
-    foods = relationship(
-        "FoodCanEatAt", back_populates="type_of_meal", uselist=True, cascade="all, delete-orphan"
+    items = relationship(
+        "ItemCanEatAt", back_populates="type_of_meal", uselist=True, cascade="all, delete-orphan"
     )
     meals_of_plan = relationship(
         "MealsOfPlan", back_populates="type_of_meal", uselist=True, cascade="all, delete-orphan"

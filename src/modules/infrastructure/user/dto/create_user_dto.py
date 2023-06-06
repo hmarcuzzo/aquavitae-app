@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, constr, EmailStr, Extra, Field
+from pydantic import BaseModel, constr, EmailStr, Extra
 
 from src.core.constants.enum.user_role import UserRole
 
